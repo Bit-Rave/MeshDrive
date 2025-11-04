@@ -17,7 +17,7 @@
   - **Dossier principal** : `cryptolib/`  
     - Contient les **scripts Python** dédiés aux opérations de chiffrement et déchiffrement.  
   - **Dossier des clés** : `keys/`  
-    - Contient des **fichiers JSON** stockant les **métadonnées** et **informations sur les fichiers uploadés**, notamment ceux **divisés en plusieurs parties** (*chunks*).  
+    - Contient des **fichiers JSON** stockant les **métadonnées** et **informations sur les fichiers uploadés**, notamment ceux **divisés en plusieurs parties** (*chunks*) Les fichiers sont diviés en chunk de **1M** et chiffré avec **AES-256-GCM**.  
 
 - **Tests Peer-to-Peer (P2P)**  
   - **Dossier** : `p2p/`  
