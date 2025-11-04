@@ -1,5 +1,3 @@
-"""Modèles de données pour le système de chiffrement"""
-
 from dataclasses import dataclass
 from typing import List, Dict
 
@@ -12,7 +10,6 @@ class EncryptedChunk:
     index: int
     hash_sha256: str
     file_path: str
-
 
 @dataclass
 class FileMetadata:
