@@ -208,6 +208,34 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Fichiers de test et données temporaires
 src/
-output/*
-keys/*
+
+# Fichiers chiffrés (chunks)
+*.enc
+output/
+
+# Métadonnées et clés de chiffrement
+keys/
+keys/**/*.json
+
+# Fichiers temporaires Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Fichiers de configuration sensibles
+.env
+.env.local
+*.key
+*.pem
+
+# Logs
+*.log
+logs/

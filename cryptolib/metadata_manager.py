@@ -23,7 +23,8 @@ class MetadataManager:
     def save_metadata(self, file_id: str, original_name: str,
                      original_size: int, encrypted_size: int,
                      key: bytes, nonce: bytes,
-                     chunks: List[EncryptedChunk]) -> FileMetadata:
+                     chunks: List[EncryptedChunk],
+                     folder_path: str = "/") -> FileMetadata:
         """
         Sauvegarde les métadonnées d'un fichier chiffré
         
@@ -56,7 +57,8 @@ class MetadataManager:
                 }
                 for c in chunks
             ],
-            created_at=self._get_timestamp()
+            created_at=self._get_timestamp(),
+            folder_path=folder_path
         )
         
         metadata_path = self.keys_dir / f"{file_id}.json"
@@ -75,7 +77,8 @@ class MetadataManager:
                     'nonce_size_bits': NONCE_SIZE_BITS
                 },
                 'chunks': metadata.chunks,
-                'created_at': metadata.created_at
+                'created_at': metadata.created_at,
+                'folder_path': metadata.folder_path
             }, f, indent=2)
         
         logger.info(f"  💾 Métadonnées sauvegardées")
@@ -105,19 +108,56 @@ class MetadataManager:
             return json.load(f)
     
     
-    def list_files(self) -> List[Dict]:
-        """Liste tous les fichiers chiffrés"""
+    def list_files(self, folder_path: str = "/") -> List[Dict]:
+        """
+        Liste tous les fichiers chiffrés dans un dossier
+        
+        Args:
+            folder_path: Chemin du dossier (par défaut "/" pour la racine)
+        """
+        files = []
+        folder_path = self._normalize_path(folder_path)
+
+        for metadata_file in self.keys_dir.glob("*.json"):
+            # Ignorer les fichiers de dossiers
+            if metadata_file.parent.name == "_folders":
+                continue
+                
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+                # Filtrer par dossier
+                file_folder = metadata.get('folder_path', '/')
+                if self._normalize_path(file_folder) == folder_path:
+                    files.append({
+                        'file_id': metadata['file_id'],
+                        'original_name': metadata['original_name'],
+                        'file_size': metadata['original_size'],
+                        'chunk_count': len(metadata['chunks']),
+                        'upload_date': metadata['created_at'],
+                        'folder_path': metadata.get('folder_path', '/')
+                    })
+
+        return files
+    
+    
+    def list_all_files(self) -> List[Dict]:
+        """Liste tous les fichiers chiffrés (tous dossiers confondus)"""
         files = []
 
         for metadata_file in self.keys_dir.glob("*.json"):
+            # Ignorer les fichiers de dossiers
+            if metadata_file.parent.name == "_folders":
+                continue
+                
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
                 files.append({
                     'file_id': metadata['file_id'],
-                    'original_name': metadata['original_name'],  # ✅ Changé
-                    'file_size': metadata['original_size'],      # ✅ Changé
-                    'chunk_count': len(metadata['chunks']),      # ✅ Changé
-                    'upload_date': metadata['created_at']        # ✅ Changé
+                    'original_name': metadata['original_name'],
+                    'file_size': metadata['original_size'],
+                    'chunk_count': len(metadata['chunks']),
+                    'upload_date': metadata['created_at'],
+                    'folder_path': metadata.get('folder_path', '/')
                 })
 
         return files
@@ -138,6 +178,39 @@ class MetadataManager:
         }
     
     
+    def update_file_folder_path(self, file_id: str, new_folder_path: str) -> bool:
+        """
+        Met à jour le folder_path d'un fichier
+        
+        Args:
+            file_id: ID du fichier
+            new_folder_path: Nouveau chemin du dossier
+            
+        Returns:
+            True si la mise à jour a réussi
+        """
+        metadata_path = self.keys_dir / f"{file_id}.json"
+        
+        if not metadata_path.exists():
+            raise FileNotFoundError(f"❌ Fichier introuvable: {file_id}")
+        
+        # Charger les métadonnées actuelles
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        
+        # Normaliser le nouveau chemin
+        new_folder_path = self._normalize_path(new_folder_path)
+        
+        # Mettre à jour le folder_path
+        metadata['folder_path'] = new_folder_path
+        
+        # Sauvegarder les métadonnées mises à jour
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        logger.info(f"  ✅ Chemin du fichier mis à jour: {file_id} -> {new_folder_path}")
+        return True
+    
     def delete_metadata(self, file_id: str):
         """Supprime les métadonnées d'un fichier"""
         metadata_path = self.keys_dir / f"{file_id}.json"
@@ -153,3 +226,15 @@ class MetadataManager:
     def _get_timestamp() -> str:
         """Retourne le timestamp ISO 8601"""
         return datetime.utcnow().isoformat() + 'Z'
+    
+    
+    @staticmethod
+    def _normalize_path(path: str) -> str:
+        """Normalise un chemin"""
+        if not path:
+            return "/"
+        path = path.strip()
+        if not path.startswith("/"):
+            path = "/" + path
+        parts = [p for p in path.split("/") if p]
+        return "/" + "/".join(parts)

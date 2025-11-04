@@ -24,12 +24,14 @@ class Encryptor:
         self.metadata_manager = metadata_manager
     
     
-    def encrypt_file(self, file_path: str) -> Dict:
+    def encrypt_file(self, file_path: str, folder_path: str = "/", original_name: str = None) -> Dict:
         """
         Chiffre un fichier complet
         
         Args:
             file_path: Chemin vers le fichier
+            folder_path: Chemin du dossier parent
+            original_name: Nom original du fichier (si différent du nom du chemin)
             
         Returns:
             {
@@ -44,7 +46,11 @@ class Encryptor:
         if not file_path.exists():
             raise FileNotFoundError(f"❌ Fichier introuvable: {file_path}")
         
-        logger.info(f"🔐 Chiffrement: {file_path.name}")
+        # Utiliser le nom original si fourni, sinon le nom du fichier
+        if original_name is None:
+            original_name = file_path.name
+        
+        logger.info(f"🔐 Chiffrement: {original_name}")
         
         # 1. Lecture du fichier
         with open(file_path, 'rb') as f:
@@ -71,21 +77,23 @@ class Encryptor:
         # 6. Sauvegarde métadonnées
         metadata = self.metadata_manager.save_metadata(
             file_id=file_id,
-            original_name=file_path.name,
+            original_name=original_name,
             original_size=original_size,
             encrypted_size=len(ciphertext),
             key=key,
             nonce=nonce,
-            chunks=chunks
+            chunks=chunks,
+            folder_path=folder_path
         )
         
         logger.info(f"✅ Chiffrement terminé\n")
         
         return {
             'file_id': file_id,
-            'original_name': file_path.name,
+            'original_name': original_name,
             'chunks': chunks,
-            'metadata': metadata
+            'metadata': metadata,
+            'folder_path': folder_path
         }
     
     
