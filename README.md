@@ -1,7 +1,3 @@
-language utilisée pour le backend : `python3 version 3.13.9`
-
-`docker` pour le déploiement 
-
 ## 💻 Développement
 ---
 
@@ -15,6 +11,7 @@ language utilisée pour le backend : `python3 version 3.13.9`
 - **Backend**  
   - **Framework** : [FastAPI](https://fastapi.tiangolo.com/)  
   - Gère la logique métier, les requêtes et les API endpoints.  
+  - Développé avec **Python 3.13.9**.  
 
 - **Chiffrement**  
   - **Dossier principal** : `cryptolib/`  
@@ -28,4 +25,21 @@ language utilisée pour le backend : `python3 version 3.13.9`
 
 - **Fichiers chiffrés**  
   - **Dossier** : `output/`  
-  - Contient les **chunks chiffrés** des fichiers uploadés.
+  - Contient les **chunks chiffrés** des fichiers uploadés.  
+
+---
+
+### 🐳 **Déploiement**
+
+- Le projet est **conteneurisé avec Docker** pour simplifier le déploiement et assurer la reproductibilité de l’environnement.  
+- Le fichier `Dockerfile` et éventuellement `docker-compose.yml` définissent la configuration du backend, du frontend et des dépendances nécessaires.  
+- Commandes principales :
+  ```bash
+  docker build -t nom_du_projet .
+  docker run -d -p 8000:8000 nom_du_projet
+  ```
+### ⚙️ Environnement technique
+- Langage principal : Python 3.13.9
+- Framework backend : FastAPI
+- Conteneurisation : Docker
+- Frontend : HTML / CSS / JavaScript
