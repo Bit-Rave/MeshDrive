@@ -33,11 +33,7 @@
 
 - Le projet est **conteneurisé avec Docker** pour simplifier le déploiement et assurer la reproductibilité de l’environnement.  
 - Le fichier `Dockerfile` et éventuellement `docker-compose.yml` définissent la configuration du backend, du frontend et des dépendances nécessaires.  
-- Commandes principales :
-  ```bash
-  docker build -t nom_du_projet .
-  docker run -d -p 8000:8000 nom_du_projet
-  ```
+- A venir
 ### ⚙️ Environnement technique
 - Langage principal : Python 3.13.9
 - Framework backend : FastAPI
