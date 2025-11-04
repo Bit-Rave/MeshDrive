@@ -11,7 +11,6 @@ from .models import EncryptedChunk
 from .chunk_manager import ChunkManager
 from .metadata_manager import MetadataManager
 from .config import KEY_SIZE_BITS
-from .utils import format_size
 
 
 logger = logging.getLogger(__name__)
@@ -25,14 +24,12 @@ class Encryptor:
         self.metadata_manager = metadata_manager
     
     
-    def encrypt_file(self, file_path: str, folder_path: str = "/", original_name: str = None) -> Dict:
+    def encrypt_file(self, file_path: str) -> Dict:
         """
         Chiffre un fichier complet
         
         Args:
             file_path: Chemin vers le fichier
-            folder_path: Chemin du dossier parent
-            original_name: Nom original du fichier (si différent du nom du chemin)
             
         Returns:
             {
@@ -47,18 +44,14 @@ class Encryptor:
         if not file_path.exists():
             raise FileNotFoundError(f"❌ Fichier introuvable: {file_path}")
         
-        # Utiliser le nom original si fourni, sinon le nom du fichier
-        if original_name is None:
-            original_name = file_path.name
-        
-        logger.info(f"🔐 Chiffrement: {original_name}")
+        logger.info(f"🔐 Chiffrement: {file_path.name}")
         
         # 1. Lecture du fichier
         with open(file_path, 'rb') as f:
             plaintext = f.read()
         
         original_size = len(plaintext)
-        logger.info(f"  📄 Taille: {format_size(original_size)}")
+        logger.info(f"  📄 Taille: {self._format_size(original_size)}")
         
         # 2. Génération clé + nonce
         key, nonce = self._generate_key_and_nonce()
@@ -66,7 +59,7 @@ class Encryptor:
         
         # 3. Chiffrement
         ciphertext = self._encrypt_data(plaintext, key, nonce)
-        logger.info(f"  ✅ Données chiffrées: {format_size(len(ciphertext))}")
+        logger.info(f"  ✅ Données chiffrées: {self._format_size(len(ciphertext))}")
         
         # 4. Génération file_id
         file_id = self._generate_file_id(ciphertext)
@@ -78,23 +71,21 @@ class Encryptor:
         # 6. Sauvegarde métadonnées
         metadata = self.metadata_manager.save_metadata(
             file_id=file_id,
-            original_name=original_name,
+            original_name=file_path.name,
             original_size=original_size,
             encrypted_size=len(ciphertext),
             key=key,
             nonce=nonce,
-            chunks=chunks,
-            folder_path=folder_path
+            chunks=chunks
         )
         
         logger.info(f"✅ Chiffrement terminé\n")
         
         return {
             'file_id': file_id,
-            'original_name': original_name,
+            'original_name': file_path.name,
             'chunks': chunks,
-            'metadata': metadata,
-            'folder_path': folder_path
+            'metadata': metadata
         }
     
     
@@ -114,3 +105,13 @@ class Encryptor:
     def _generate_file_id(self, data: bytes) -> str:
         """Génère un ID unique basé sur le hash"""
         return hashlib.sha256(data).hexdigest()[:16]
+    
+    
+    @staticmethod
+    def _format_size(size_bytes: int) -> str:
+        """Formate la taille en human-readable"""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024.0:
+                return f"{size_bytes:.2f} {unit}"
+            size_bytes /= 1024.0
+        return f"{size_bytes:.2f} TB"
