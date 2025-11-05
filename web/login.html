@@ -264,7 +264,7 @@
                 await login(username, password);
                 showSuccess('Connexion réussie ! Redirection...');
                 setTimeout(() => {
-                    window.location.href = '/drive';
+                    window.location.href = '/';
                 }, 1000);
             } catch (error) {
                 showError(error.message || 'Erreur lors de la connexion');
@@ -301,7 +301,7 @@
                 await register(username, email, password);
                 showSuccess('Inscription réussie ! Connexion...');
                 setTimeout(() => {
-                    window.location.href = '/drive';
+                    window.location.href = '/';
                 }, 1000);
             } catch (error) {
                 showError(error.message || 'Erreur lors de l\'inscription');
@@ -311,7 +311,7 @@
         // Vérifier si déjà connecté
         document.addEventListener('DOMContentLoaded', async () => {
             if (await checkAuth()) {
-                window.location.href = '/drive';
+                window.location.href = '/';
             }
         });
     </script>

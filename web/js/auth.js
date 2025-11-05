@@ -105,7 +105,7 @@ async function login(username, password) {
  */
 function logout() {
     clearAuth();
-    window.location.href = '/';
+    window.location.href = '/login.html';
 }
 
 /**
