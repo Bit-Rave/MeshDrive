@@ -32,7 +32,8 @@ L'API sera accessible sur `http://localhost:8000`
 ### 2. Accéder à l'interface web
 
 L'interface web est accessible via l'API :
-- **Interface web** : http://localhost:8000/web/
+- **Dashboard** : http://localhost:8000/ (page d'accueil avec lien vers le drive)
+- **Drive** : http://localhost:8000/drive (interface complète de gestion des fichiers)
 - **Documentation API** : http://localhost:8000/docs
 
 ### 3. Utilisation de l'interface
@@ -54,7 +55,8 @@ Si vous changez le port de l'API, modifiez cette constante.
 
 ## Fichiers
 
-- `index.html` : Interface utilisateur principale
+- `dashboard.html` : Page d'accueil (Dashboard) accessible à la racine `/`
+- `drive.html` : Interface utilisateur principale (Drive) accessible sur `/drive`
 - `styles.css` : Styles CSS
 - `js/` : Modules JavaScript
   - `api.js` : Module JavaScript pour les appels API
@@ -72,6 +74,6 @@ Si vous changez le port de l'API, modifiez cette constante.
 
 - L'interface nécessite que l'API FastAPI soit en cours d'exécution
 - Les fichiers sont chiffrés côté serveur avec AES-256-GCM
-- Les fichiers chiffrés sont stockés dans `output/`
-- Les métadonnées sont stockées dans `keys/`
+- Les fichiers chiffrés sont stockés dans `data/chunks/`
+- Les métadonnées sont stockées dans `data/keys/`
 

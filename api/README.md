@@ -169,7 +169,7 @@ with open('fichier_dechiffre.pdf', 'wb') as f:
 
 ## Notes
 
-- Les fichiers chiffrés sont stockés dans le dossier `output/`
-- Les métadonnées sont stockées dans le dossier `keys/`
+- Les fichiers chiffrés sont stockés dans le dossier `data/chunks/`
+- Les métadonnées sont stockées dans le dossier `data/keys/`
 - La bibliothèque `cryptolib` reste utilisable directement sans passer par l'API (compatibilité avec `app.py`)
 
