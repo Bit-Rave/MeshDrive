@@ -46,13 +46,23 @@ if web_dir.exists():
     # Servir les fichiers statiques (JS, CSS, etc.) sur /static
     app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
     
-    # Servir index.html à la racine
+    # Dashboard à la racine
     @app.get("/", response_class=HTMLResponse)
     async def root():
-        """Point d'entrée principal - sert la page web"""
-        index_path = web_dir / "index.html"
-        if index_path.exists():
-            with open(index_path, 'r', encoding='utf-8') as f:
+        """Point d'entrée principal - Dashboard"""
+        dashboard_path = web_dir / "dashboard.html"
+        if dashboard_path.exists():
+            with open(dashboard_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return {"message": "MeshDrive Crypto API", "version": "1.0.0"}
+    
+    # Drive sur /drive
+    @app.get("/drive", response_class=HTMLResponse)
+    async def drive():
+        """Interface web MeshDrive - Drive"""
+        drive_path = web_dir / "drive.html"
+        if drive_path.exists():
+            with open(drive_path, 'r', encoding='utf-8') as f:
                 return f.read()
         return {"message": "MeshDrive Crypto API", "version": "1.0.0"}
 
