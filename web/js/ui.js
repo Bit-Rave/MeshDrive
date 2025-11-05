@@ -48,7 +48,7 @@ function showContextMenu(e, fileId) {
     
     menu.innerHTML = `
         <div class="context-menu-item" onclick="showFileDetails()">📋 Détails</div>
-        <div class="context-menu-item" onclick="downloadFile()">📥 Télécharger</div>
+        <div class="context-menu-item" onclick="downloadSelectedFile()">📥 Télécharger</div>
         <div class="context-menu-item" onclick="showMoveFileDialog()">📦 Déplacer</div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" onclick="deleteFile()">🗑️ Supprimer</div>
@@ -110,7 +110,13 @@ function showLoading() {
 
 // Masquer l'état de chargement
 function hideLoading() {
-    // Le chargement est remplacé par updateTree()
+    // Si updateTree n'a pas encore été appelé, réinitialiser la liste
+    const fileList = document.getElementById('fileList');
+    if (fileList && fileList.innerHTML.includes('Chargement...')) {
+        // Si on est toujours en chargement, réinitialiser
+        fileList.innerHTML = '';
+    }
+    // updateTree() sera appelé par la fonction qui utilise hideLoading()
 }
 
 // Afficher une erreur

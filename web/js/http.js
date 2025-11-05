@@ -109,7 +109,7 @@ async function deleteRequest(url, options = {}) {
 /**
  * Télécharge un fichier depuis une URL
  */
-async function downloadFile(url, filename, options = {}) {
+async function downloadFileFromUrl(url, filename, options = {}) {
     const headers = options.headers || getAuthHeaders();
     
     const response = await fetch(url, {
@@ -164,6 +164,8 @@ if (typeof window !== 'undefined') {
     window.postRequest = postRequest;
     window.putRequest = putRequest;
     window.deleteRequest = deleteRequest;
-    window.downloadFile = downloadFile;
+    window.downloadFileFromUrl = downloadFileFromUrl;
+    // Alias pour compatibilité
+    window.downloadFile = downloadFileFromUrl;
 }
 

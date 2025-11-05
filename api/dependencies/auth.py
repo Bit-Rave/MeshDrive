@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, Request, Form
 from jose import JWTError, jwt
 from core.auth import SECRET_KEY, ALGORITHM, TokenData, get_user_by_username
 from core.database import get_db, User
+from core.security import log_action, get_client_ip, AuditAction
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -61,20 +62,62 @@ async def get_current_user_from_multipart(
         logger.error("Token manquant - Authorization header: {}, FormData token: {}".format(
             auth_header is not None, token is not None
         ))
+        
+        # Logger l'échec d'authentification
+        ip_address = get_client_ip(request)
+        log_action(
+            user_id=None,
+            action=AuditAction.INVALID_TOKEN,
+            resource=None,
+            success=False,
+            details="Token manquant",
+            ip_address=ip_address
+        )
+        
         raise credentials_exception
     
     try:
         payload = jwt.decode(final_token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
+            ip_address = get_client_ip(request)
+            log_action(
+                user_id=None,
+                action=AuditAction.INVALID_TOKEN,
+                resource=None,
+                success=False,
+                details="Token invalide: username manquant",
+                ip_address=ip_address
+            )
             raise credentials_exception
         token_data = TokenData(username=username)
     except JWTError as e:
         logger.error(f"Erreur JWT: {str(e)}")
+        
+        # Logger l'échec d'authentification
+        ip_address = get_client_ip(request)
+        log_action(
+            user_id=None,
+            action=AuditAction.INVALID_TOKEN,
+            resource=None,
+            success=False,
+            details=f"Erreur JWT: {str(e)}",
+            ip_address=ip_address
+        )
+        
         raise credentials_exception
     
     user = get_user_by_username(db, username=token_data.username)
     if user is None or not user.is_active:
+        ip_address = get_client_ip(request)
+        log_action(
+            user_id=None,
+            action=AuditAction.INVALID_TOKEN,
+            resource=token_data.username,
+            success=False,
+            details=f"Utilisateur introuvable ou inactif",
+            ip_address=ip_address
+        )
         raise credentials_exception
     
     return user

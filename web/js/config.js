@@ -36,7 +36,8 @@ const API_CONFIG = {
 // Constantes de stockage
 const STORAGE_KEYS = {
     token: 'meshdrive_token',
-    user: 'meshdrive_user'
+    user: 'meshdrive_user',
+    password: 'meshdrive_password' // Stocké temporairement en sessionStorage
 };
 
 // Exposer la configuration globalement

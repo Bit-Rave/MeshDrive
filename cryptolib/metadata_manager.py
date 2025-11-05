@@ -128,13 +128,25 @@ class MetadataManager:
                 # Filtrer par dossier
                 file_folder = metadata.get('folder_path', '/')
                 if self._normalize_path(file_folder) == folder_path:
+                    # Vérifier si c'est un fichier chiffré côté client
+                    is_client_encrypted = metadata.get('encryption', {}).get('client_encrypted', False)
+                    
+                    # Si c'est un fichier chiffré côté client, utiliser un nom temporaire
+                    # Le vrai nom sera déchiffré côté client
+                    original_name = metadata.get('original_name', '[encrypted]')
+                    
+                    # Filtrer les fichiers avec .enc dans le nom (fichiers temporaires)
+                    if original_name and original_name.endswith('.enc'):
+                        continue  # Ignorer ce fichier
+                    
                     files.append({
                         'file_id': metadata['file_id'],
-                        'original_name': metadata['original_name'],
-                        'file_size': metadata['original_size'],
+                        'original_name': original_name if not is_client_encrypted else '[encrypted]',
+                        'file_size': metadata.get('original_size', metadata.get('encrypted_size', 0)),
                         'chunk_count': len(metadata['chunks']),
                         'upload_date': metadata['created_at'],
-                        'folder_path': metadata.get('folder_path', '/')
+                        'folder_path': metadata.get('folder_path', '/'),
+                        'client_encrypted': is_client_encrypted  # Indicateur pour le frontend
                     })
 
         return files
@@ -227,6 +239,90 @@ class MetadataManager:
         """Retourne le timestamp ISO 8601"""
         return datetime.utcnow().isoformat() + 'Z'
     
+    
+    def save_metadata_client_encrypted(
+        self,
+        file_id: str,
+        encrypted_key: str,
+        nonce: str,
+        integrity_hash: str,
+        encrypted_metadata: str,
+        original_size: int,
+        encrypted_size: int,
+        chunks: List[EncryptedChunk],
+        folder_path: str = "/"
+    ) -> FileMetadata:
+        """
+        Sauvegarde les métadonnées d'un fichier chiffré côté client (Zero-Knowledge)
+        
+        Args:
+            file_id: ID unique du fichier
+            encrypted_key: Clé chiffrée avec le mot de passe utilisateur (base64)
+            nonce: Nonce utilisé pour le chiffrement (base64)
+            integrity_hash: Hash d'intégrité du fichier original (SHA-256)
+            encrypted_metadata: Métadonnées chiffrées (nom de fichier, etc.) (base64)
+            original_size: Taille originale du fichier
+            encrypted_size: Taille chiffrée du fichier
+            chunks: Liste des chunks
+            folder_path: Chemin du dossier
+            
+        Returns:
+            Objet FileMetadata
+        """
+        metadata_path = self.keys_dir / f"{file_id}.json"
+        
+        # Sauvegarder les métadonnées avec les clés chiffrées
+        metadata_data = {
+            'file_id': file_id,
+            'original_size': original_size,
+            'encrypted_size': encrypted_size,
+            'encryption': {
+                'algorithm': ENCRYPTION_ALGORITHM,
+                'key': encrypted_key,  # Clé chiffrée (pas en clair)
+                'nonce': nonce,
+                'key_size_bits': KEY_SIZE_BITS,
+                'nonce_size_bits': NONCE_SIZE_BITS,
+                'client_encrypted': True  # Indicateur que c'est chiffré côté client
+            },
+            'integrity_hash': integrity_hash,
+            'encrypted_metadata': encrypted_metadata,  # Métadonnées chiffrées
+            'chunks': [
+                {
+                    'chunk_id': c.chunk_id,
+                    'hash': c.hash_sha256,
+                    'size': c.size,
+                    'index': c.index,
+                    'file_path': c.file_path
+                }
+                for c in chunks
+            ],
+            'created_at': self._get_timestamp(),
+            'folder_path': folder_path
+        }
+        
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata_data, f, indent=2)
+        
+        logger.info(f"  💾 Métadonnées sauvegardées (Zero-Knowledge)")
+        
+        # Retourner un objet FileMetadata (sans les données sensibles)
+        return FileMetadata(
+            file_id=file_id,
+            original_name="[encrypted]",  # Nom chiffré
+            original_size=original_size,
+            encrypted_size=encrypted_size,
+            key=encrypted_key,  # Clé chiffrée
+            nonce=nonce,
+            chunks=[{
+                'chunk_id': c.chunk_id,
+                'hash': c.hash_sha256,
+                'size': c.size,
+                'index': c.index,
+                'file_path': c.file_path
+            } for c in chunks],
+            created_at=metadata_data['created_at'],
+            folder_path=folder_path
+        )
     
     @staticmethod
     def _normalize_path(path: str) -> str:

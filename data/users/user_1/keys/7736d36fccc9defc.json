@@ -1,0 +1,24 @@
+{
+  "file_id": "7736d36fccc9defc",
+  "original_name": "Fond de cam obs.png.enc",
+  "original_size": 15,
+  "encrypted_size": 31,
+  "encryption": {
+    "algorithm": "AES-256-GCM",
+    "key": "0a7641f7c35483a97f7df274d80cfb874ddcec3822ebc1d6900af2d1d0a4c9dc",
+    "nonce": "de3c2c00679736c76caf4ab7",
+    "key_size_bits": 256,
+    "nonce_size_bits": 96
+  },
+  "chunks": [
+    {
+      "chunk_id": "7736d36fccc9defc",
+      "hash": "7736d36fccc9defcdaff26c3881fbe41b6369fb2d4968311f4f3951d32603d13",
+      "size": 31,
+      "index": 0,
+      "file_path": "C:\\Users\\marcus\\PycharmProjects\\MeshDrive\\data\\users\\user_1\\chunks\\7736d36fccc9defc_chunk_0000.enc"
+    }
+  ],
+  "created_at": "2025-11-05T22:53:56.154173Z",
+  "folder_path": "/"
+}

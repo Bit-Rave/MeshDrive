@@ -33,6 +33,30 @@ function getUser() {
 }
 
 /**
+ * Stocke temporairement le mot de passe utilisateur en sessionStorage (en mémoire)
+ * ⚠️ ATTENTION : Le mot de passe est stocké en mémoire uniquement pendant la session
+ * Il sera effacé à la fermeture du navigateur
+ */
+function savePasswordForSession(password) {
+    sessionStorage.setItem(STORAGE_KEYS.password, password);
+}
+
+/**
+ * Récupère le mot de passe utilisateur depuis sessionStorage
+ * ⚠️ ATTENTION : Le mot de passe n'est disponible que pendant la session active
+ */
+function getPasswordFromSession() {
+    return sessionStorage.getItem(STORAGE_KEYS.password);
+}
+
+/**
+ * Supprime le mot de passe de la session
+ */
+function clearPasswordFromSession() {
+    sessionStorage.removeItem(STORAGE_KEYS.password);
+}
+
+/**
  * Supprime le token et les informations utilisateur
  */
 function clearAuth() {

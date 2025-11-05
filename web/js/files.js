@@ -99,6 +99,12 @@ function updateTree() {
 
     // Puis les fichiers
     filteredFiles.forEach(file => {
+        // Filtrer les fichiers avec .enc dans le nom (fichiers chiffrés côté client)
+        // Ces fichiers sont temporaires et ne doivent pas être affichés
+        if (file.original_name && file.original_name.endsWith('.enc')) {
+            return; // Ignorer ce fichier
+        }
+        
         const row = document.createElement('tr');
         row.dataset.fileId = file.file_id;
         const checkboxId = `checkbox_${file.file_id}`;
@@ -152,11 +158,7 @@ function selectFile(fileId) {
         row.classList.add('selected');
         selectedFileId = fileId;
         selectedFolderPath = null;
-        // Masquer le bouton "Nouveau dossier" quand un fichier est sélectionné
-        const newFolderBtn = document.getElementById('newFolderBtn');
-        if (newFolderBtn) {
-            newFolderBtn.style.display = 'none';
-        }
+        // Le bouton "Nouveau dossier" reste visible même quand un fichier est sélectionné
     }
 }
 
@@ -170,11 +172,7 @@ function selectFolder(folderPath) {
         row.classList.add('selected');
         selectedFolderPath = folderPath;
         selectedFileId = null;
-        // Masquer le bouton "Nouveau dossier" quand un dossier est sélectionné
-        const newFolderBtn = document.getElementById('newFolderBtn');
-        if (newFolderBtn) {
-            newFolderBtn.style.display = 'none';
-        }
+        // Le bouton "Nouveau dossier" reste visible même quand un dossier est sélectionné
     }
 }
 
@@ -255,7 +253,8 @@ async function downloadSelectedFiles() {
             const file = files.find(f => f.file_id === fileId);
             if (file) {
                 try {
-                    await decryptFileAPI(fileId, file.original_name);
+                    // Passer les métadonnées du fichier pour éviter la requête inutile
+                    await decryptFileAPI(fileId, file.original_name, file);
                 } catch (error) {
                     console.error(`Erreur lors du téléchargement de ${file.original_name}:`, error);
                     showModal('❌ Erreur', `Erreur lors du téléchargement de ${file.original_name}: ${error.message}`);
@@ -363,17 +362,18 @@ async function showFileDetails() {
     }
 }
 
-// Télécharger fichier
-async function downloadFile() {
+// Télécharger fichier sélectionné
+async function downloadSelectedFile() {
     if (!selectedFileId) return;
     const file = files.find(f => f.file_id === selectedFileId);
     if (!file) return;
 
     try {
-        await decryptFileAPI(selectedFileId, file.original_name);
+        // Passer les métadonnées du fichier pour éviter la requête inutile
+        await decryptFileAPI(selectedFileId, file.original_name, file);
     } catch (error) {
         console.error('Erreur lors du téléchargement:', error);
-        showModal('❌ Erreur', 'Erreur lors du téléchargement: ' + error.message);
+        showModal('❌ Erreur', 'Erreur lors du téléchargement: ' + (error.message || 'Erreur inconnue'));
     }
 }
 

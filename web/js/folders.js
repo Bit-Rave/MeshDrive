@@ -60,7 +60,7 @@ async function deleteFolder() {
 async function downloadFolderAsZip(folderPath) {
     try {
         const url = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.folders.download(folderPath)}`;
-        await downloadFile(url, 'folder.zip');
+        await downloadFileFromUrl(url, 'folder.zip');
     } catch (error) {
         console.error('Erreur lors du téléchargement du dossier:', error);
         showModal('❌ Erreur', 'Erreur lors du téléchargement du dossier: ' + error.message);
