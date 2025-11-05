@@ -11,6 +11,7 @@ from .models import EncryptedChunk
 from .chunk_manager import ChunkManager
 from .metadata_manager import MetadataManager
 from .config import KEY_SIZE_BITS
+from .utils import format_size
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class Encryptor:
             plaintext = f.read()
         
         original_size = len(plaintext)
-        logger.info(f"  📄 Taille: {self._format_size(original_size)}")
+        logger.info(f"  📄 Taille: {format_size(original_size)}")
         
         # 2. Génération clé + nonce
         key, nonce = self._generate_key_and_nonce()
@@ -65,7 +66,7 @@ class Encryptor:
         
         # 3. Chiffrement
         ciphertext = self._encrypt_data(plaintext, key, nonce)
-        logger.info(f"  ✅ Données chiffrées: {self._format_size(len(ciphertext))}")
+        logger.info(f"  ✅ Données chiffrées: {format_size(len(ciphertext))}")
         
         # 4. Génération file_id
         file_id = self._generate_file_id(ciphertext)
@@ -113,13 +114,3 @@ class Encryptor:
     def _generate_file_id(self, data: bytes) -> str:
         """Génère un ID unique basé sur le hash"""
         return hashlib.sha256(data).hexdigest()[:16]
-    
-    
-    @staticmethod
-    def _format_size(size_bytes: int) -> str:
-        """Formate la taille en human-readable"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.2f} TB"

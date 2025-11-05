@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔐 MyDrive - Stockage Sécurisé</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -13,7 +13,7 @@
             <h1>🔐 MyDrive</h1>
             <div class="btn-frame">
                 <button class="btn-upload" onclick="uploadFile()">📤 Upload</button>
-                <button class="btn-refresh" onclick="createNewFolder()">📁 Nouveau dossier</button>
+                <button class="btn-refresh" id="newFolderBtn" onclick="createNewFolder()">📁 Nouveau dossier</button>
                 <button class="btn-refresh" onclick="downloadSelectedFiles()" id="downloadSelectedBtn" style="display: none;">📥 Télécharger sélection</button>
                 <button class="btn-refresh" onclick="deleteSelectedFiles()" id="deleteSelectedBtn" style="display: none;">🗑️ Supprimer la sélection</button>
                 <button class="btn-refresh" onclick="loadFiles()">🔄 Actualiser</button>
@@ -113,15 +113,15 @@
     </div>
 
     <!-- JavaScript modules -->
-    <script src="js/api.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/files.js"></script>
-    <script src="js/folders.js"></script>
-    <script src="js/dragdrop.js"></script>
-    <script src="js/main.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/state.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/files.js"></script>
+    <script src="/static/js/folders.js"></script>
+    <script src="/static/js/dragdrop.js"></script>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
 

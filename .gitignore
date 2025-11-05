@@ -239,3 +239,10 @@ build/
 # Logs
 *.log
 logs/
+
+# Fichiers de test (mode --test)
+test_keys/
+test_output/
+host/host_config.test.json
+host/host.test.log
+host/.server.test.pid

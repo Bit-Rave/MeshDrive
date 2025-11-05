@@ -1,5 +1,5 @@
 """
-Système de chiffrement pour MyDrive P2P
+Module core de MeshDrive - Système de chiffrement et gestion de fichiers
 """
 
 import logging
@@ -18,9 +18,16 @@ try:
 except ImportError:
     # Valeurs par défaut si config.py n'existe pas
     LOG_LEVEL = "INFO"
-    KEYS_DIR = Path("./keys")
-    CHUNKS_DIR = Path("./output")
+    PROJECT_ROOT = Path(__file__).parent.parent
+    DATA_DIR = PROJECT_ROOT / "data"
+    KEYS_DIR = DATA_DIR / "keys"
+    CHUNKS_DIR = DATA_DIR / "chunks"
     CHUNK_SIZE = 1024 * 1024
+    
+    # Créer les dossiers s'ils n'existent pas
+    DATA_DIR.mkdir(exist_ok=True)
+    KEYS_DIR.mkdir(exist_ok=True)
+    CHUNKS_DIR.mkdir(exist_ok=True)
 
 # Import des composants
 from .chunk_manager import ChunkManager
@@ -163,3 +170,4 @@ class CryptoSystem:
 
 # Export
 __all__ = ['CryptoSystem']
+

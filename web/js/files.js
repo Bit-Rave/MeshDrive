@@ -72,7 +72,12 @@ function updateTree() {
                 selectFolder(folder.folder_path);
             }
         };
-        row.ondblclick = () => openFolder(folder.folder_path);
+        row.ondblclick = (e) => {
+            // Ne pas déclencher openFolder si le double-clic vient de la checkbox
+            if (e.target.type !== 'checkbox') {
+                openFolder(folder.folder_path);
+            }
+        };
         row.oncontextmenu = (e) => showFolderContextMenu(e, folder.folder_path);
 
         const folderCheckboxId = `checkbox_folder_${folder.folder_path}`;
@@ -97,7 +102,12 @@ function updateTree() {
                 selectFile(file.file_id);
             }
         };
-        row.ondblclick = () => showFileDetails();
+        row.ondblclick = (e) => {
+            // Ne pas déclencher showFileDetails si le double-clic vient de la checkbox
+            if (e.target.type !== 'checkbox') {
+                showFileDetails();
+            }
+        };
         row.oncontextmenu = (e) => showContextMenu(e, file.file_id);
 
         row.innerHTML = `
@@ -137,6 +147,11 @@ function selectFile(fileId) {
         row.classList.add('selected');
         selectedFileId = fileId;
         selectedFolderPath = null;
+        // Masquer le bouton "Nouveau dossier" quand un fichier est sélectionné
+        const newFolderBtn = document.getElementById('newFolderBtn');
+        if (newFolderBtn) {
+            newFolderBtn.style.display = 'none';
+        }
     }
 }
 
@@ -150,6 +165,11 @@ function selectFolder(folderPath) {
         row.classList.add('selected');
         selectedFolderPath = folderPath;
         selectedFileId = null;
+        // Masquer le bouton "Nouveau dossier" quand un dossier est sélectionné
+        const newFolderBtn = document.getElementById('newFolderBtn');
+        if (newFolderBtn) {
+            newFolderBtn.style.display = 'none';
+        }
     }
 }
 
@@ -179,13 +199,20 @@ function updateSelectedFiles() {
     const hasSelection = selectedFileIds.size > 0 || selectedFolderPaths.size > 0;
     const downloadBtn = document.getElementById('downloadSelectedBtn');
     const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const newFolderBtn = document.getElementById('newFolderBtn');
     
     if (hasSelection) {
         downloadBtn.style.display = selectedFileIds.size > 0 ? 'inline-block' : 'none';
         deleteBtn.style.display = 'inline-block';
+        if (newFolderBtn) {
+            newFolderBtn.style.display = 'none';
+        }
     } else {
         downloadBtn.style.display = 'none';
         deleteBtn.style.display = 'none';
+        if (newFolderBtn) {
+            newFolderBtn.style.display = 'inline-block';
+        }
     }
 
     // Mettre à jour la checkbox "Sélectionner tout"

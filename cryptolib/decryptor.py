@@ -2,11 +2,11 @@
 
 import hashlib
 import logging
-from typing import Tuple
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .chunk_manager import ChunkManager
 from .metadata_manager import MetadataManager
+from .utils import format_size
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class Decryptor:
 
         # 4. Réassemblage
         ciphertext = self.chunk_manager.reassemble_chunks(chunks_data)
-        logger.info(f"  📦 Données réassemblées: {self._format_size(len(ciphertext))}")
+        logger.info(f"  📦 Données réassemblées: {format_size(len(ciphertext))}")
 
         # 5. Vérification intégrité
         self._verify_integrity(ciphertext, file_id)
@@ -56,14 +56,13 @@ class Decryptor:
 
         # 6. Déchiffrement
         plaintext = self._decrypt_data(ciphertext, key, nonce)
-        logger.info(f"  ✅ Déchiffrement réussi: {self._format_size(len(plaintext))}")
+        logger.info(f"  ✅ Déchiffrement réussi: {format_size(len(plaintext))}")
 
         # 7. Sauvegarde sur disque
+        from pathlib import Path
         if output_path is None:
-            from pathlib import Path
             output_path = Path("./output") / original_name
         else:
-            from pathlib import Path
             output_path = Path(output_path)
 
         # Créer le dossier parent si nécessaire
@@ -107,11 +106,3 @@ class Decryptor:
             )
     
     
-    @staticmethod
-    def _format_size(size_bytes: int) -> str:
-        """Formate la taille"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.2f} TB"
