@@ -187,17 +187,25 @@ class FileService:
         """
         try:
             file_info = self.crypto_system.get_file_info(file_id)
+            
+            # S'assurer que tous les champs sont présents
             return FileDetails(
-                file_id=file_id,
+                file_id=file_info.get('file_id', file_id),
                 name=file_info.get('name', ''),
                 size=file_info.get('size', 0),
                 encrypted_size=file_info.get('encrypted_size', 0),
                 algorithm=file_info.get('algorithm', 'AES-256-GCM'),
-                chunks=len(file_info.get('chunks', [])),
+                chunks=file_info.get('chunks', 0),  # Déjà un int, pas besoin de len()
                 created_at=file_info.get('created_at', '')
             )
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=f"Fichier introuvable: {file_id}")
+        except KeyError as e:
+            logger.error(f"Erreur lors de la récupération des détails du fichier {file_id}: {e}")
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des détails: {str(e)}")
+        except Exception as e:
+            logger.error(f"Erreur inattendue lors de la récupération des détails du fichier {file_id}: {e}")
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des détails: {str(e)}")
     
     def move_file(self, file_id: str, new_folder_path: str) -> dict:
         """
