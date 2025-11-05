@@ -19,7 +19,7 @@ from core.auth import (
     get_user_by_username
 )
 from core.database import get_db, User
-from core.security import log_action, get_client_ip, AuditAction
+from core.security import log_user_action, get_client_ip, AuditAction
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -39,8 +39,8 @@ async def register(
         user = create_user(db, user_create)
         
         # Logger l'inscription réussie
-        log_action(
-            user_id=user.id,
+        log_user_action(
+            user=user,
             action=AuditAction.REGISTER,
             resource=user.username,
             success=True,
@@ -51,8 +51,8 @@ async def register(
         return UserResponse.model_validate(user)
     except HTTPException as e:
         # Logger l'échec d'inscription
-        log_action(
-            user_id=None,
+        log_user_action(
+            user=None,
             action=AuditAction.REGISTER,
             resource=user_create.username,
             success=False,
@@ -62,8 +62,8 @@ async def register(
         raise
     except Exception as e:
         # Logger l'erreur
-        log_action(
-            user_id=None,
+        log_user_action(
+            user=None,
             action=AuditAction.REGISTER,
             resource=user_create.username,
             success=False,
@@ -90,8 +90,8 @@ async def login(
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         # Logger la tentative de connexion échouée
-        log_action(
-            user_id=None,
+        log_user_action(
+            user=None,
             action=AuditAction.LOGIN,
             resource=form_data.username,
             success=False,
@@ -112,8 +112,8 @@ async def login(
     )
     
     # Logger la connexion réussie
-    log_action(
-        user_id=user.id,
+    log_user_action(
+        user=user,
         action=AuditAction.LOGIN,
         resource=user.username,
         success=True,

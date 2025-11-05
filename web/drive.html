@@ -128,17 +128,5 @@
     <script src="/static/js/folders.js"></script>
     <script src="/static/js/dragdrop.js"></script>
     <script src="/static/js/main.js"></script>
-    <script>
-        // Vérifier l'authentification au chargement
-        document.addEventListener('DOMContentLoaded', async () => {
-            const isAuth = await checkAuth();
-            if (!isAuth) {
-                window.location.href = '/login.html';
-                return;
-            }
-            // Si authentifié, initialiser l'application normalement
-            // (main.js sera chargé après)
-        });
-    </script>
 </body>
 </html>

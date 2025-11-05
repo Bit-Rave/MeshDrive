@@ -6,9 +6,21 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Vérifier l'authentification avant d'initialiser
     if (typeof checkAuth === 'function') {
-        const isAuth = await checkAuth();
-        if (!isAuth) {
-            window.location.href = '/login.html';
+        try {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                // Éviter les redirections multiples
+                if (window.location.pathname !== '/login.html') {
+                    window.location.href = '/login.html';
+                }
+                return;
+            }
+        } catch (error) {
+            console.error('Erreur lors de la vérification de l\'authentification:', error);
+            // En cas d'erreur, rediriger vers login seulement si on n'est pas déjà sur login
+            if (window.location.pathname !== '/login.html') {
+                window.location.href = '/login.html';
+            }
             return;
         }
     }

@@ -8,13 +8,15 @@
  */
 async function handleResponse(response) {
     if (!response.ok) {
-        // Si erreur 401 (non autorisé), rediriger vers login
+        // Si erreur 401 (non autorisé), ne pas rediriger automatiquement
+        // Laisser la fonction appelante gérer la redirection
+        // Cela évite les boucles de redirection lors de checkAuth()
         if (response.status === 401) {
             if (typeof clearAuth === 'function') {
                 clearAuth();
             }
-            window.location.href = '/login.html';
-            throw new Error('Session expirée. Veuillez vous reconnecter.');
+            const error = await response.json().catch(() => ({ detail: 'Session expirée. Veuillez vous reconnecter.' }));
+            throw new Error(error.detail || 'Session expirée. Veuillez vous reconnecter.');
         }
         const error = await response.json().catch(() => ({ detail: 'Erreur inconnue' }));
         throw new Error(error.detail || `Erreur ${response.status}`);

@@ -310,8 +310,13 @@
 
         // Vérifier si déjà connecté
         document.addEventListener('DOMContentLoaded', async () => {
-            if (await checkAuth()) {
-                window.location.href = '/';
+            try {
+                if (await checkAuth()) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                // En cas d'erreur, rester sur la page de login
+                console.error('Erreur lors de la vérification de l\'authentification:', error);
             }
         });
     </script>

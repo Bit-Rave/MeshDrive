@@ -82,21 +82,27 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // Vérifier l'authentification
-            const isAuth = await checkAuth();
-            
-            if (!isAuth) {
-                // Rediriger vers login si non connecté
-                window.location.href = '/login.html';
-                return;
-            }
+            try {
+                const isAuth = await checkAuth();
+                
+                if (!isAuth) {
+                    // Rediriger vers login si non connecté
+                    window.location.href = '/login.html';
+                    return;
+                }
 
-            // Afficher les informations utilisateur
-            const user = getUser();
-            if (user) {
-                document.getElementById('user-info').style.display = 'block';
-                document.getElementById('username').textContent = user.username;
-                document.getElementById('user-email').textContent = user.email;
-                document.querySelector('button.logout').style.display = 'inline-block';
+                // Afficher les informations utilisateur
+                const user = getUser();
+                if (user) {
+                    document.getElementById('user-info').style.display = 'block';
+                    document.getElementById('username').textContent = user.username;
+                    document.getElementById('user-email').textContent = user.email;
+                    document.querySelector('button.logout').style.display = 'inline-block';
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification de l\'authentification:', error);
+                // En cas d'erreur, rediriger vers login
+                window.location.href = '/login.html';
             }
         });
     </script>

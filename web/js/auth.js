@@ -147,7 +147,12 @@ async function checkAuth() {
         saveUser(user);
         return true;
     } catch (error) {
-        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        // Ne pas logger les erreurs 401 (non autorisé) comme des erreurs critiques
+        // C'est normal si le token est invalide ou expiré
+        const errorMessage = error.message || String(error) || '';
+        if (!errorMessage.includes('401') && !errorMessage.includes('Session expirée')) {
+            console.error('Erreur lors de la vérification de l\'authentification:', error);
+        }
         clearAuth();
         return false;
     }
