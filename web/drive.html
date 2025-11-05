@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 MyDrive - Stockage Sécurisé</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🔐 MyDrive</h1>
+            <div class="btn-frame">
+                <button class="btn-upload" onclick="uploadFile()">📤 Upload</button>
+                <button class="btn-refresh" id="newFolderBtn" onclick="createNewFolder()">📁 Nouveau dossier</button>
+                <button class="btn-refresh" onclick="downloadSelectedFiles()" id="downloadSelectedBtn" style="display: none;">📥 Télécharger sélection</button>
+                <button class="btn-refresh" onclick="deleteSelectedFiles()" id="deleteSelectedBtn" style="display: none;">🗑️ Supprimer la sélection</button>
+                <button class="btn-refresh" onclick="loadFiles()">🔄 Actualiser</button>
+            </div>
+        </div>
+
+        <!-- CHEMIN ACTUEL (Breadcrumb) -->
+        <div class="stats-frame" id="breadcrumb">
+            <div class="stats-label" id="currentPath">📁 /</div>
+            <div class="breadcrumb-nav">
+                <button class="nav-btn" id="backBtn" onclick="navigateBack()" disabled title="Retour">◀</button>
+                <button class="nav-btn" id="forwardBtn" onclick="navigateForward()" disabled title="Avancer">▶</button>
+            </div>
+        </div>
+
+        <!-- STATISTIQUES -->
+        <div class="stats-frame">
+            <div class="stats-label" id="stats">📊 Statistiques: ...</div>
+        </div>
+
+        <!-- BARRE DE RECHERCHE -->
+        <div class="search-frame">
+            <span class="search-icon">🔍</span>
+            <div class="search-input-wrapper">
+                <input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." oninput="filterFiles()">
+            </div>
+            <div class="sort-wrapper">
+                <span class="sort-label">Trier par:</span>
+                <select class="sort-select" id="sortSelect" onchange="loadFiles()">
+                    <option value="date">Date</option>
+                    <option value="name">Nom</option>
+                    <option value="size">Taille</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- LISTE DES FICHIERS -->
+        <div class="tree-frame">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox" style="width: 40px;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" title="Sélectionner tout">
+                            </th>
+                            <th class="col-name">📄 Nom du fichier</th>
+                            <th class="col-size">💾 Taille</th>
+                            <th class="col-date">📅 Date</th>
+                            <th class="col-id">🔑 ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileList">
+                        <!-- Les fichiers seront insérés ici -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU CONTEXTUEL -->
+    <div class="context-menu" id="contextMenu">
+        <!-- Le contenu sera généré dynamiquement par JavaScript -->
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle"></div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-ok" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION -->
+    <div class="modal" id="confirmModal" onclick="closeConfirmModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div class="modal-title" id="confirmTitle"></div>
+            <div class="modal-body" id="confirmBody"></div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" onclick="closeConfirmModal()">Annuler</button>
+                <button class="btn-modal btn-ok" id="confirmBtn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAG AND DROP OVERLAY -->
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="drag-overlay-content">
+            <div class="icon">📤</div>
+            <div>Déposez vos fichiers ici</div>
+        </div>
+    </div>
+
+    <!-- JavaScript modules -->
+    <!-- Configuration et utilitaires de base -->
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/http.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/state.js"></script>
+    <!-- Authentification et API -->
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api.js"></script>
+    <!-- Interface utilisateur -->
+    <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/files.js"></script>
+    <script src="/static/js/folders.js"></script>
+    <script src="/static/js/dragdrop.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script>
+        // Vérifier l'authentification au chargement
+        document.addEventListener('DOMContentLoaded', async () => {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                window.location.href = '/login.html';
+                return;
+            }
+            // Si authentifié, initialiser l'application normalement
+            // (main.js sera chargé après)
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+# MeshDrive - Documentation pour IA
+
+## 📋 Vue d'ensemble du projet
+
+MeshDrive est un système de stockage cloud sécurisé avec chiffrement côté client. Il permet aux utilisateurs de stocker leurs fichiers de manière chiffrée sur un serveur, avec isolation complète des données par utilisateur.
+
+### Objectif principal
+Créer une alternative open-source à Google Drive/Dropbox avec :
+- Chiffrement end-to-end (E2EE)
+- Multi-utilisateurs avec isolation complète des données
+- Interface web moderne
+- API REST pour intégration
+
+---
+
+## 🏗️ Architecture du projet
+
+### Structure des dossiers
+
+```
+MeshDrive/
+├── api/                    # API FastAPI (backend)
+│   ├── crypto_api.py      # Endpoints principaux (encrypt, decrypt, files, folders)
+│   └── run_api.py         # Script de lancement
+│
+├── core/                   # Modules core (authentification, base de données)
+│   ├── database.py        # Modèles SQLAlchemy (User, etc.)
+│   ├── auth.py            # Authentification JWT
+│   ├── auth_routes.py     # Routes d'authentification (/auth/login, /auth/register)
+│   └── utils.py           # Utilitaires (get_crypto_system_for_user)
+│
+├── cryptolib/              # Bibliothèque de chiffrement
+│   ├── __init__.py        # Point d'entrée (CryptoSystem)
+│   ├── encryptor.py       # Chiffrement de fichiers
+│   ├── decryptor.py       # Déchiffrement de fichiers
+│   ├── chunk_manager.py   # Gestion des chunks (découpage des fichiers)
+│   ├── metadata_manager.py # Gestion des métadonnées (clés, infos fichiers)
+│   ├── folder_manager.py  # Gestion des dossiers
+│   ├── models.py          # Modèles Pydantic (FileInfo, FolderInfo, etc.)
+│   └── config.py          # Configuration (chemins, tailles de chunks)
+│
+├── web/                   # Interface web (frontend)
+│   ├── dashboard.html      # Page principale (dashboard)
+│   ├── drive.html          # Interface du drive (upload, navigation)
+│   ├── login.html          # Page de connexion/inscription
+│   └── js/                 # Scripts JavaScript
+│       ├── auth.js         # Gestion de l'authentification
+│       ├── api.js          # Appels API
+│       ├── files.js         # Gestion des fichiers
+│       ├── folders.js       # Gestion des dossiers
+│       ├── dragdrop.js      # Upload drag & drop
+│       ├── navigation.js    # Navigation dans les dossiers
+│       ├── state.js         # État de l'application
+│       ├── ui.js            # Interface utilisateur
+│       └── utils.js        # Utilitaires frontend
+│
+└── data/                  # Données stockées (chunks, clés, DB)
+    ├── chunks/            # Fichiers chiffrés (par utilisateur)
+    ├── keys/              # Clés de chiffrement (par utilisateur)
+    └── meshdrive.db       # Base de données SQLite
+```
+
+---
+
+## 🛠️ Technologies utilisées
+
+### Backend
+- **FastAPI** : Framework web async pour l'API REST
+- **SQLAlchemy** : ORM pour la gestion de la base de données
+- **SQLite** : Base de données (peut être migrée vers PostgreSQL)
+- **JWT (jose)** : Authentification par tokens
+- **bcrypt** : Hashage des mots de passe
+- **Pydantic** : Validation des données et modèles
+
+### Frontend
+- **Vanilla JavaScript** : Pas de framework (pour la simplicité)
+- **Fetch API** : Appels HTTP à l'API
+- **HTML5** : Structure des pages
+- **CSS** : Styles inline (pourrait être externalisé)
+
+### Cryptographie
+- **cryptography** (Python) : Bibliothèque de chiffrement
+- **AES-256-GCM** : Algorithme de chiffrement symétrique
+- **PBKDF2** : Dérivation de clés depuis les mots de passe
+- **Chunks** : Découpage des fichiers en morceaux pour optimisation
+
+---
+
+## 🔐 Système de chiffrement
+
+### Principe
+1. **Chiffrement côté client** : Les fichiers sont chiffrés avant l'upload
+2. **Isolation par utilisateur** : Chaque utilisateur a ses propres chunks et clés
+3. **Découpage en chunks** : Les fichiers sont divisés en morceaux de 1MB (configurable)
+4. **Métadonnées séparées** : Les informations sur les fichiers (nom, taille, etc.) sont stockées séparément
+
+### Structure des données
+- **Chunks** : Fichiers `.enc` chiffrés avec AES-256-GCM
+- **Clés** : Fichiers JSON contenant les métadonnées et infos de chiffrement
+- **Organisation** : `data/users/user_{id}/chunks/` et `data/users/user_{id}/keys/`
+
+---
+
+## 🔑 Authentification et sécurité
+
+### Système d'authentification
+- **JWT tokens** : Tokens d'accès avec expiration (30 minutes)
+- **OAuth2** : Support OAuth2PasswordBearer pour les requêtes standard
+- **Headers + FormData** : Double méthode pour envoyer le token (header Authorization ou FormData)
+
+### Problème rencontré avec multipart/form-data
+**Problème** : Les navigateurs bloquent parfois le header `Authorization` avec `multipart/form-data` lors de l'upload de fichiers.
+
+**Solution** : 
+1. Le token est envoyé dans le header `Authorization` (priorité)
+2. Le token est aussi envoyé dans `FormData` comme fallback
+3. L'endpoint `/encrypt-folder` extrait le token depuis le header OU depuis FormData
+
+### Isolation des données
+- Chaque utilisateur a son propre dossier dans `data/users/user_{id}/`
+- Les chunks et clés sont isolés par utilisateur
+- Le `CryptoSystem` est instancié avec `user_id` pour garantir l'isolation
+
+---
+
+## 📡 API Endpoints
+
+### Authentification
+- `POST /auth/register` : Création de compte
+- `POST /auth/login` : Connexion (retourne JWT token)
+- `GET /auth/me` : Informations utilisateur actuel
+
+### Fichiers
+- `POST /encrypt` : Chiffrer et uploader un fichier
+- `POST /encrypt-folder` : Chiffrer plusieurs fichiers (multithreading)
+- `GET /decrypt/{file_id}` : Déchiffrer et télécharger un fichier
+- `GET /files` : Lister les fichiers
+- `GET /files/{file_id}` : Informations détaillées d'un fichier
+- `PUT /files/{file_id}/move` : Déplacer un fichier
+- `DELETE /files/{file_id}` : Supprimer un fichier
+
+### Dossiers
+- `POST /folders` : Créer un dossier
+- `GET /folders-all` : Lister tous les dossiers
+- `GET /folders/{folder_path}` : Informations d'un dossier
+- `GET /folder-contents` : Contenu d'un dossier (fichiers + sous-dossiers)
+- `DELETE /folders/{folder_path}` : Supprimer un dossier
+
+### Pages web
+- `GET /` : Dashboard principal
+- `GET /drive` : Interface du drive
+- `GET /login.html` : Page de connexion
+
+---
+
+## 🐛 Problèmes rencontrés et solutions
+
+### 1. Problème d'organisation du code
+**Problème** : Tous les fichiers (database, auth, utils) étaient dans `api/`, créant du "spaghetti code".
+
+**Solution** : Réorganisation en créant `core/` pour les modules core (database, auth, auth_routes, utils) et gardant `api/` uniquement pour l'API FastAPI.
+
+### 2. Token Authorization non reçu avec FormData
+**Problème** : Les navigateurs bloquent parfois le header `Authorization` avec `multipart/form-data`, causant des erreurs "Could not validate credentials".
+
+**Solution** : 
+- Le token est envoyé dans FormData en plus du header
+- L'endpoint `/encrypt-folder` extrait le token depuis FormData via `Form(None)`
+- Fallback : header → FormData → erreur
+
+### 3. `Form` non importé
+**Problème** : `NameError: name 'Form' is not defined` dans `crypto_api.py`.
+
+**Solution** : Ajout de `Form` dans les imports FastAPI : `from fastapi import ..., Form`
+
+### 4. Consommation du body avec `request.form()`
+**Problème** : Appeler `await request.form()` dans `get_current_user` consomme le body, empêchant la lecture des fichiers `File(...)`.
+
+**Solution** : Pour les endpoints avec fichiers, l'authentification est faite manuellement dans l'endpoint (pas via `Depends(get_current_active_user)`), en extrayant le token depuis `Form(None)`.
+
+### 5. Isolation des données par utilisateur
+**Problème** : Initialement, tous les utilisateurs partageaient les mêmes chunks et clés.
+
+**Solution** : 
+- Modification de `CryptoSystem` pour accepter `user_id`
+- Chemins dynamiques : `data/users/user_{id}/chunks/` et `data/users/user_{id}/keys/`
+- Fonction `get_crypto_system_for_user()` dans `core/utils.py`
+
+---
+
+## 🔄 Flux d'utilisation
+
+### 1. Inscription/Connexion
+1. Utilisateur accède à `/login.html`
+2. Création de compte via `POST /auth/register` ou connexion via `POST /auth/login`
+3. Réception d'un JWT token stocké dans `localStorage`
+
+### 2. Upload de fichier
+1. Utilisateur sélectionne un fichier (drag & drop ou input file)
+2. Frontend appelle `POST /encrypt-folder` avec :
+   - Fichiers dans `FormData`
+   - Token dans header `Authorization` ET dans `FormData`
+3. Backend :
+   - Extrait le token (header ou FormData)
+   - Authentifie l'utilisateur
+   - Chiffre le fichier avec `CryptoSystem(user_id=user.id)`
+   - Stocke les chunks dans `data/users/user_{id}/chunks/`
+   - Stocke les métadonnées dans `data/users/user_{id}/keys/`
+4. Retourne les informations du fichier chiffré
+
+### 3. Navigation et téléchargement
+1. Utilisateur accède à `/drive`
+2. Frontend charge les fichiers via `GET /folder-contents?folder_path=/`
+3. Pour télécharger : `GET /decrypt/{file_id}?download=true`
+4. Backend déchiffre et retourne le fichier
+
+---
+
+## 📝 État actuel du projet
+
+### ✅ Fonctionnalités implémentées
+- [x] Chiffrement/déchiffrement de fichiers
+- [x] Authentification JWT
+- [x] Isolation des données par utilisateur
+- [x] Gestion des dossiers
+- [x] Upload multiple avec multithreading
+- [x] Interface web complète
+- [x] API REST complète
+- [x] Navigation dans les dossiers
+- [x] Upload drag & drop
+
+### ⚠️ Problèmes connus
+- Le token peut parfois ne pas être reçu (selon le navigateur)
+- Pas de limite de quota vérifiée lors de l'upload
+- Pas de partage de fichiers entre utilisateurs
+- Pas de recherche de fichiers
+- Interface web basique (pas de framework CSS)
+
+### 🔮 Améliorations possibles
+- Migration vers PostgreSQL pour la production
+- Ajout de rate limiting
+- Système de partage de fichiers
+- Recherche full-text
+- Interface web plus moderne (React/Vue)
+- Support des métadonnées étendues (tags, notes)
+- Versioning de fichiers
+- Compression avant chiffrement
+
+---
+
+## 🚀 Démarrage rapide
+
+### Installation
+```bash
+pip install -r requirements.txt
+```
+
+### Lancement
+```bash
+python api/run_api.py
+```
+
+L'API sera accessible sur `http://127.0.0.1:8000`
+
+### Documentation interactive
+- Swagger UI : `http://127.0.0.1:8000/docs`
+- ReDoc : `http://127.0.0.1:8000/redoc`
+
+---
+
+## 📚 Détails techniques
+
+### Configuration
+- **Chunk size** : 1 MB par défaut (configurable dans `cryptolib/config.py`)
+- **Token expiration** : 30 minutes
+- **Algorithme** : AES-256-GCM
+- **Dérivation de clés** : PBKDF2 avec 100,000 itérations
+
+### Base de données
+- **Modèle User** : id, username, email, hashed_password, is_active, is_admin, quota_bytes, used_bytes
+- **Quota par défaut** : 1 GB (1073741824 bytes)
+
+### Structure des chunks
+Chaque chunk est un fichier `.enc` contenant :
+- Données chiffrées avec AES-256-GCM
+- Nonce (IV) pour le chiffrement
+
+### Structure des métadonnées
+Fichiers JSON contenant :
+- `file_id` : Identifiant unique
+- `original_name` : Nom original du fichier
+- `file_size` : Taille du fichier
+- `chunk_count` : Nombre de chunks
+- `folder_path` : Chemin du dossier
+- `upload_date` : Date d'upload
+- `chunks` : Liste des chunks avec leurs chemins
+
+---
+
+## 🔍 Points d'attention pour une autre IA
+
+1. **Isolation des données** : Toujours utiliser `CryptoSystem(user_id=user.id)` pour garantir l'isolation
+2. **Authentification** : Le token doit être extrait depuis header OU FormData pour les uploads
+3. **Chemins** : Les chemins sont relatifs à `data/users/user_{id}/` pour chaque utilisateur
+4. **Multithreading** : L'upload multiple utilise `ThreadPoolExecutor` pour le traitement parallèle
+5. **CORS** : Actuellement configuré pour accepter toutes les origines (`*`), à restreindre en production
+6. **Secret key JWT** : Actuellement hardcodé, à générer aléatoirement en production
+
+---
+
+## 📞 Contacts et ressources
+
+- **Structure du projet** : Voir `README.md` à la racine
+- **API documentation** : Voir `api/README.md`
+- **Cryptolib documentation** : Voir `cryptolib/README.md`
+- **Sécurité** : Voir `SECURITY.md` pour les recommandations
+
+---
+
+**Dernière mise à jour** : Novembre 2025
+**Version** : 2.0.0
+**Statut** : En développement actif
+

@@ -1,0 +1,19 @@
+# FastAPI et serveur
+fastapi==0.121.0
+uvicorn[standard]==0.38.0
+python-multipart==0.0.20
+
+# Cryptographie
+cryptography==46.3.0
+
+# Authentification et sécurité
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.0
+
+# Base de données
+sqlalchemy==2.0.36
+
+# Validation
+pydantic[email]==2.12.3
+email-validator==2.3.0
+

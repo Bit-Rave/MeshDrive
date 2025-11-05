@@ -1,0 +1,514 @@
+/* Styles CSS pour MeshDrive */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    min-height: 100vh;
+}
+
+/* Container principal */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #2d2d44 0%, #1e1e2e 100%);
+    padding: 25px 30px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.header h1 {
+    color: #89b4fa;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.btn-frame {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Boutons */
+button, .btn-upload, .btn-refresh, .btn-modal {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-upload {
+    background: linear-gradient(135deg, #89b4fa 0%, #74a7f0 100%);
+    color: white;
+}
+
+.btn-upload:hover {
+    background: linear-gradient(135deg, #74a7f0 0%, #5b8ee0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(137, 180, 250, 0.4);
+}
+
+.btn-refresh {
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+.btn-refresh:hover {
+    background: #585b70;
+    transform: translateY(-2px);
+}
+
+.btn-refresh:disabled {
+    background: #2d2d44;
+    color: #585b70;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Navigation buttons */
+.nav-btn {
+    padding: 8px 12px;
+    background: #45475a;
+    color: #cdd6f4;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: #585b70;
+}
+
+.nav-btn:disabled {
+    background: #2d2d44;
+    color: #585b70;
+    cursor: not-allowed;
+}
+
+/* Stats frame */
+.stats-frame {
+    background: #2d2d44;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stats-label {
+    color: #cdd6f4;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.breadcrumb-nav {
+    display: flex;
+    gap: 8px;
+}
+
+/* Search frame */
+.search-frame {
+    background: #2d2d44;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.search-icon {
+    font-size: 20px;
+    color: #89b4fa;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    background: #1e1e2e;
+    border: 1px solid #45475a;
+    border-radius: 8px;
+    color: #cdd6f4;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #89b4fa;
+    box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.1);
+}
+
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sort-label {
+    color: #cdd6f4;
+    font-size: 14px;
+}
+
+.sort-select {
+    padding: 8px 12px;
+    background: #1e1e2e;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    color: #cdd6f4;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #89b4fa;
+}
+
+/* Tree frame */
+.tree-frame {
+    background: #2d2d44;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #45475a;
+}
+
+th {
+    background: #1e1e2e;
+    color: #89b4fa;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    color: #cdd6f4;
+    font-size: 14px;
+}
+
+tr {
+    transition: background 0.2s;
+}
+
+tr:hover {
+    background: #1e1e2e;
+}
+
+tr.selected {
+    background: #313244;
+}
+
+tr.drag-over {
+    background: #45475a;
+    border: 2px dashed #89b4fa;
+}
+
+.col-checkbox {
+    width: 40px;
+    text-align: center;
+}
+
+.col-name {
+    min-width: 200px;
+}
+
+.col-size {
+    width: 100px;
+    text-align: right;
+}
+
+.col-date {
+    width: 180px;
+}
+
+.col-id {
+    width: 200px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #585b70;
+}
+
+/* Checkboxes */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #89b4fa;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #585b70;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.empty-state-text {
+    font-size: 16px;
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #89b4fa;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #45475a;
+    border-top-color: #89b4fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: #2d2d44;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal-title {
+    color: #89b4fa;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.modal-body {
+    color: #cdd6f4;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    white-space: pre-wrap;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-modal {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-ok {
+    background: #89b4fa;
+    color: white;
+}
+
+.btn-ok:hover {
+    background: #74a7f0;
+}
+
+.btn-cancel {
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+.btn-cancel:hover {
+    background: #585b70;
+}
+
+/* Context menu */
+.context-menu {
+    display: none;
+    position: fixed;
+    background: #2d2d44;
+    border: 1px solid #45475a;
+    border-radius: 8px;
+    padding: 8px 0;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-width: 180px;
+}
+
+.context-menu.show {
+    display: block;
+}
+
+.context-menu-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    color: #cdd6f4;
+    font-size: 14px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu-item:hover {
+    background: #45475a;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background: #45475a;
+    margin: 4px 0;
+}
+
+/* Drag and drop overlay */
+.drag-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 46, 0.9);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+}
+
+.drag-overlay.active {
+    display: flex;
+}
+
+.drag-overlay-content {
+    text-align: center;
+    color: #89b4fa;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.drag-overlay-content .icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .btn-frame {
+        justify-content: center;
+    }
+    
+    .stats-frame {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .search-frame {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-input-wrapper {
+        width: 100%;
+    }
+    
+    table {
+        font-size: 12px;
+    }
+    
+    th, td {
+        padding: 8px 4px;
+    }
+    
+    .col-id {
+        display: none;
+    }
+}
+

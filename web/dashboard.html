@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MeshDrive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .dashboard-container {
+            text-align: center;
+            padding: 40px;
+        }
+        h1 {
+            color: #89b4fa;
+            margin-bottom: 30px;
+        }
+        .user-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #2d2d44;
+            border-radius: 5px;
+        }
+        .user-info span {
+            color: #89b4fa;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        a, button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #89b4fa;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        a:hover, button:hover {
+            background-color: #74a7f0;
+            transform: translateY(-2px);
+        }
+        button.logout {
+            background-color: #f38ba8;
+        }
+        button.logout:hover {
+            background-color: #e85d7a;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Dashboard</h1>
+        <div id="user-info" class="user-info" style="display: none;">
+            <p>Connecté en tant que : <span id="username"></span></p>
+            <p>Email : <span id="user-email"></span></p>
+        </div>
+        <div class="buttons">
+            <a href="/drive">Accéder au Drive</a>
+            <button onclick="logout()" class="logout" style="display: none;">Se déconnecter</button>
+        </div>
+    </div>
+
+    <!-- JavaScript modules - Ordre important -->
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/http.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Vérifier l'authentification
+            const isAuth = await checkAuth();
+            
+            if (!isAuth) {
+                // Rediriger vers login si non connecté
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Afficher les informations utilisateur
+            const user = getUser();
+            if (user) {
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('username').textContent = user.username;
+                document.getElementById('user-email').textContent = user.email;
+                document.querySelector('button.logout').style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+</html>

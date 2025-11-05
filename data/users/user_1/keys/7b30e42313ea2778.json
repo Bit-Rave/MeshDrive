@@ -1,0 +1,24 @@
+{
+  "file_id": "7b30e42313ea2778",
+  "original_name": "EN ATTENTE.png",
+  "original_size": 592021,
+  "encrypted_size": 592037,
+  "encryption": {
+    "algorithm": "AES-256-GCM",
+    "key": "bcf51c81cfb385a08b8cde49764c93e8f6ec53adb10d358dce7b84b1c74cc3bf",
+    "nonce": "e8641ca0127f02e67286abd3",
+    "key_size_bits": 256,
+    "nonce_size_bits": 96
+  },
+  "chunks": [
+    {
+      "chunk_id": "7b30e42313ea2778",
+      "hash": "7b30e42313ea2778251d75d17315a8c20759886d57f93f9a5eaf2b1cdf8492e6",
+      "size": 592037,
+      "index": 0,
+      "file_path": "C:\\Users\\marcus\\PycharmProjects\\MeshDrive\\data\\users\\user_1\\chunks\\7b30e42313ea2778_chunk_0000.enc"
+    }
+  ],
+  "created_at": "2025-11-05T22:06:29.467061Z",
+  "folder_path": "/"
+}
