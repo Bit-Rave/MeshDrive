@@ -24,7 +24,7 @@ python run_api.py
 Ou directement avec uvicorn :
 ```bash
 cd api
-uvicorn crypto_api:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 L'API sera accessible sur `http://localhost:8000`
@@ -73,7 +73,8 @@ Si vous changez le port de l'API, modifiez cette constante.
 ## Notes
 
 - L'interface nécessite que l'API FastAPI soit en cours d'exécution
-- Les fichiers sont chiffrés côté serveur avec AES-256-GCM
-- Les fichiers chiffrés sont stockés dans `data/chunks/`
-- Les métadonnées sont stockées dans `data/keys/`
+- Les fichiers peuvent être chiffrés côté client (Zero-Knowledge) ou côté serveur
+- Les fichiers chiffrés sont stockés dans `data/users/user_{id}/chunks/`
+- Les métadonnées sont stockées dans `data/users/user_{id}/keys/`
+- L'interface utilise des modules JavaScript modulaires (`config.js`, `http.js`, `api.js`, etc.)
 

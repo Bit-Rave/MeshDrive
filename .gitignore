@@ -56,9 +56,7 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
-db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff:
@@ -205,3 +203,27 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# MeshDrive - Données utilisateur et fichiers chiffrés
+# Ne pas versionner les données utilisateur, fichiers chiffrés, métadonnées et logs
+data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Fichiers chiffrés (chunks)
+*.enc
+
+# Métadonnées JSON (mais garder les fichiers de configuration JSON)
+# Ignorer les JSON dans data/keys/ (métadonnées de fichiers)
+data/**/*.json
+
+# Logs d'audit et données sensibles
+*.log
+!**/package.json
+!**/package-lock.json
+!**/tsconfig.json
+!**/tsconfig.*.json
+!**/.eslintrc.json
+!**/.prettierrc.json

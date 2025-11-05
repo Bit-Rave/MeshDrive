@@ -212,7 +212,7 @@ def start(
     # Préparer la commande uvicorn
     cmd = [
         sys.executable, "-m", "uvicorn",
-        "api.crypto_api:app",
+        "api.app:app",
         "--host", config["host"],
         "--port", str(config["port"]),
         "--log-level", config["log_level"]

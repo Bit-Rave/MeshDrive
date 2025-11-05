@@ -15,9 +15,9 @@ from core.security import (
     AuditAction,
 )
 from cryptolib.models import FolderInfo, FolderContentsResponse, CreateFolderRequest
+from cryptolib import CryptoSystem
 from api.dependencies.crypto import get_crypto_system
 from api.services.folder_service import FolderService
-from cryptolib import CryptoSystem
 
 logger = logging.getLogger(__name__)
 

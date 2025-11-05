@@ -409,7 +409,7 @@ def encrypt_file_key(file_key: str, user_password: str) -> str:
 ```python
 # Configuration uvicorn avec SSL
 uvicorn.run(
-    "crypto_api:app",
+    "api.app:app",
     host="0.0.0.0",
     port=443,
     ssl_keyfile="/path/to/key.pem",

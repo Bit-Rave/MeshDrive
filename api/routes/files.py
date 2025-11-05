@@ -18,9 +18,9 @@ from core.security import (
     AuditAction,
 )
 from cryptolib.models import EncryptResponse, DecryptResponse, FileDetails, FileInfo, MoveFileRequest
+from cryptolib import CryptoSystem
 from api.dependencies.crypto import get_crypto_system
 from api.services.file_service import FileService
-from cryptolib import CryptoSystem
 
 logger = logging.getLogger(__name__)
 

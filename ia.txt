@@ -20,14 +20,32 @@ Créer une alternative open-source à Google Drive/Dropbox avec :
 ```
 MeshDrive/
 ├── api/                    # API FastAPI (backend)
-│   ├── crypto_api.py      # Endpoints principaux (encrypt, decrypt, files, folders)
-│   └── run_api.py         # Script de lancement
+│   ├── app.py             # Point d'entrée principal de l'API
+│   ├── run_api.py         # Script de lancement
+│   ├── routes/            # Routes modulaires
+│   │   ├── files.py       # Routes pour les fichiers
+│   │   ├── folders.py     # Routes pour les dossiers
+│   │   ├── static.py      # Routes pour servir les pages HTML
+│   │   └── multipart_files.py # Routes pour upload multiple
+│   ├── services/          # Services métier
+│   │   ├── file_service.py
+│   │   ├── folder_service.py
+│   │   └── client_encrypted_service.py
+│   ├── dependencies/      # Dépendances FastAPI
+│   │   ├── auth.py        # Authentification pour multipart
+│   │   └── crypto.py      # Injection CryptoSystem
+│   └── utils/             # Utilitaires API
+│       ├── file_helpers.py
+│       └── zip_helpers.py
 │
 ├── core/                   # Modules core (authentification, base de données)
 │   ├── database.py        # Modèles SQLAlchemy (User, etc.)
 │   ├── auth.py            # Authentification JWT
 │   ├── auth_routes.py     # Routes d'authentification (/auth/login, /auth/register)
-│   └── utils.py           # Utilitaires (get_crypto_system_for_user)
+│   ├── utils.py           # Utilitaires (get_crypto_system_for_user)
+│   └── security/          # Modules de sécurité
+│       ├── validation.py  # Validation et sanitisation
+│       └── audit.py       # Logging d'audit
 │
 ├── cryptolib/              # Bibliothèque de chiffrement
 │   ├── __init__.py        # Point d'entrée (CryptoSystem)
@@ -36,6 +54,7 @@ MeshDrive/
 │   ├── chunk_manager.py   # Gestion des chunks (découpage des fichiers)
 │   ├── metadata_manager.py # Gestion des métadonnées (clés, infos fichiers)
 │   ├── folder_manager.py  # Gestion des dossiers
+│   ├── key_encryption.py  # Chiffrement des clés avec mot de passe
 │   ├── models.py          # Modèles Pydantic (FileInfo, FolderInfo, etc.)
 │   └── config.py          # Configuration (chemins, tailles de chunks)
 │
@@ -43,20 +62,27 @@ MeshDrive/
 │   ├── dashboard.html      # Page principale (dashboard)
 │   ├── drive.html          # Interface du drive (upload, navigation)
 │   ├── login.html          # Page de connexion/inscription
-│   └── js/                 # Scripts JavaScript
+│   ├── styles.css         # Styles CSS centralisés
+│   └── js/                 # Scripts JavaScript modulaires
+│       ├── config.js       # Configuration centralisée
+│       ├── http.js         # Module HTTP (fetch, headers)
 │       ├── auth.js         # Gestion de l'authentification
 │       ├── api.js          # Appels API
+│       ├── crypto.js       # Chiffrement côté client (Zero-Knowledge)
 │       ├── files.js         # Gestion des fichiers
 │       ├── folders.js       # Gestion des dossiers
-│       ├── dragdrop.js      # Upload drag & drop
+│       ├── dragdrop.js      # Upload drag & drop avec chiffrement
 │       ├── navigation.js    # Navigation dans les dossiers
 │       ├── state.js         # État de l'application
 │       ├── ui.js            # Interface utilisateur
 │       └── utils.js        # Utilitaires frontend
 │
 └── data/                  # Données stockées (chunks, clés, DB)
-    ├── chunks/            # Fichiers chiffrés (par utilisateur)
-    ├── keys/              # Clés de chiffrement (par utilisateur)
+    ├── users/             # Données par utilisateur
+    │   └── user_{id}/     # Dossier par utilisateur
+    │       ├── chunks/    # Fichiers chiffrés
+    │       └── keys/       # Clés de chiffrement et métadonnées
+    ├── logs/              # Logs d'audit
     └── meshdrive.db       # Base de données SQLite
 ```
 
@@ -130,26 +156,29 @@ MeshDrive/
 - `POST /auth/login` : Connexion (retourne JWT token)
 - `GET /auth/me` : Informations utilisateur actuel
 
-### Fichiers
-- `POST /encrypt` : Chiffrer et uploader un fichier
-- `POST /encrypt-folder` : Chiffrer plusieurs fichiers (multithreading)
-- `GET /decrypt/{file_id}` : Déchiffrer et télécharger un fichier
-- `GET /files` : Lister les fichiers
-- `GET /files/{file_id}` : Informations détaillées d'un fichier
-- `PUT /files/{file_id}/move` : Déplacer un fichier
-- `DELETE /files/{file_id}` : Supprimer un fichier
+### Fichiers (préfixe `/api`)
+- `POST /api/encrypt` : Chiffrer et uploader un fichier
+- `POST /encrypt-folder` : Chiffrer plusieurs fichiers (multithreading, fichier chiffré côté client)
+- `GET /api/decrypt/{file_id}` : Déchiffrer et télécharger un fichier (serveur)
+- `GET /api/client-decrypt/{file_id}` : Récupérer données pour déchiffrement côté client
+- `GET /api/files` : Lister les fichiers
+- `GET /api/files/{file_id}` : Informations détaillées d'un fichier
+- `PUT /api/files/{file_id}/move` : Déplacer un fichier
+- `DELETE /api/files/{file_id}` : Supprimer un fichier
 
-### Dossiers
-- `POST /folders` : Créer un dossier
-- `GET /folders-all` : Lister tous les dossiers
-- `GET /folders/{folder_path}` : Informations d'un dossier
-- `GET /folder-contents` : Contenu d'un dossier (fichiers + sous-dossiers)
-- `DELETE /folders/{folder_path}` : Supprimer un dossier
+### Dossiers (préfixe `/api`)
+- `POST /api/folders` : Créer un dossier
+- `GET /api/folders` : Lister les dossiers dans un dossier parent
+- `GET /api/folders-all` : Lister tous les dossiers
+- `GET /api/folders/{folder_path}` : Informations d'un dossier
+- `GET /api/folder-contents` : Contenu d'un dossier (fichiers + sous-dossiers)
+- `GET /api/download-folder/{folder_path}` : Télécharger un dossier en ZIP
+- `DELETE /api/folders/{folder_path}` : Supprimer un dossier
 
 ### Pages web
-- `GET /` : Dashboard principal
-- `GET /drive` : Interface du drive
-- `GET /login.html` : Page de connexion
+- `GET /` : Dashboard principal (servi par `static_router`)
+- `GET /drive` : Interface du drive (servi par `static_router`)
+- `GET /login.html` : Page de connexion (servi par `static_router`)
 
 ---
 
@@ -169,7 +198,7 @@ MeshDrive/
 - Fallback : header → FormData → erreur
 
 ### 3. `Form` non importé
-**Problème** : `NameError: name 'Form' is not defined` dans `crypto_api.py`.
+**Problème** : `NameError: name 'Form' is not defined` dans les routes multipart.
 
 **Solution** : Ajout de `Form` dans les imports FastAPI : `from fastapi import ..., Form`
 
@@ -229,12 +258,20 @@ MeshDrive/
 - [x] Navigation dans les dossiers
 - [x] Upload drag & drop
 
-### ⚠️ Problèmes connus
-- Le token peut parfois ne pas être reçu (selon le navigateur)
-- Pas de limite de quota vérifiée lors de l'upload
-- Pas de partage de fichiers entre utilisateurs
-- Pas de recherche de fichiers
-- Interface web basique (pas de framework CSS)
+### ✅ Fonctionnalités récentes
+- Architecture Zero-Knowledge avec chiffrement côté client
+- Chiffrement des clés avec mot de passe utilisateur
+- Chiffrement des métadonnées (noms de fichiers)
+- Vérification d'intégrité des données
+- Détection intelligente du type de chiffrement (côté client vs serveur)
+- Gestion améliorée des erreurs et états de chargement
+- Architecture modulaire (routes, services, dépendances)
+
+### ⚠️ À implémenter
+- Rate limiting (DoS protection)
+- Partage de fichiers entre utilisateurs
+- Recherche de fichiers
+- Système RBAC complet avec permissions granulaire
 
 ### 🔮 Améliorations possibles
 - Migration vers PostgreSQL pour la production
@@ -317,7 +354,9 @@ Fichiers JSON contenant :
 
 ---
 
-**Dernière mise à jour** : Novembre 2025
+**Dernière mise à jour** : Janvier 2025
 **Version** : 2.0.0
 **Statut** : En développement actif
+
+**Note** : L'architecture a été refactorisée avec une structure modulaire. L'ancien fichier `api/crypto_api.py` a été remplacé par `api/app.py` et des routers modulaires dans `api/routes/`.
 

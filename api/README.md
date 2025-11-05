@@ -19,7 +19,7 @@ python run_api.py
 Ou directement avec uvicorn:
 ```bash
 cd api
-uvicorn crypto_api:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 L'API sera accessible à l'adresse: `http://localhost:8000`
@@ -169,7 +169,8 @@ with open('fichier_dechiffre.pdf', 'wb') as f:
 
 ## Notes
 
-- Les fichiers chiffrés sont stockés dans le dossier `data/chunks/`
-- Les métadonnées sont stockées dans le dossier `data/keys/`
-- La bibliothèque `cryptolib` reste utilisable directement sans passer par l'API (compatibilité avec `app.py`)
+- Les fichiers chiffrés sont stockés dans le dossier `data/users/user_{id}/chunks/`
+- Les métadonnées sont stockées dans le dossier `data/users/user_{id}/keys/`
+- L'API utilise une architecture modulaire avec routers (`api/routes/`), services (`api/services/`) et dépendances (`api/dependencies/`)
+- La bibliothèque `cryptolib` reste utilisable directement sans passer par l'API
 
