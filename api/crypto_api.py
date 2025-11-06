@@ -3,18 +3,22 @@ API FastAPI pour exposer les fonctionnalités de cryptolib
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import List
 from pathlib import Path
 import tempfile
 import os
 import logging
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from cryptolib import CryptoSystem
+from cryptolib.models import (
+    FileInfo, FileDetails, EncryptResponse, FolderInfo,
+    CreateFolderRequest, FolderContentsResponse, MoveFileRequest, DecryptResponse
+)
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -27,7 +31,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configuration CORS pour permettre les requêtes depuis le frontend
+# Configuration CORS pour permettre les requêtes depuis le web
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # En production, spécifiez les origines autorisées
@@ -39,75 +43,31 @@ app.add_middleware(
 # Servir les fichiers statiques du dossier web
 web_dir = Path(__file__).parent.parent / "web"
 if web_dir.exists():
-    app.mount("/web", StaticFiles(directory=str(web_dir), html=True), name="web")
+    # Servir les fichiers statiques (JS, CSS, etc.) sur /static
+    app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
+    
+    # Dashboard à la racine
+    @app.get("/", response_class=HTMLResponse)
+    async def root():
+        """Point d'entrée principal - Dashboard"""
+        dashboard_path = web_dir / "dashboard.html"
+        if dashboard_path.exists():
+            with open(dashboard_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return {"message": "MeshDrive Crypto API", "version": "1.0.0"}
+    
+    # Drive sur /drive
+    @app.get("/drive", response_class=HTMLResponse)
+    async def drive():
+        """Interface web MeshDrive - Drive"""
+        drive_path = web_dir / "drive.html"
+        if drive_path.exists():
+            with open(drive_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return {"message": "MeshDrive Crypto API", "version": "1.0.0"}
 
 # Initialisation du système cryptographique
 crypto_system = CryptoSystem()
-
-
-# Modèles Pydantic pour les requêtes/réponses
-class FileInfo(BaseModel):
-    """Informations sur un fichier chiffré"""
-    file_id: str
-    original_name: str
-    file_size: int
-    chunk_count: int
-    upload_date: str
-
-
-class FileDetails(BaseModel):
-    """Détails complets d'un fichier"""
-    file_id: str
-    name: str
-    size: int
-    encrypted_size: int
-    algorithm: str
-    chunks: int
-    created_at: str
-
-
-class EncryptResponse(BaseModel):
-    """Réponse après chiffrement"""
-    file_id: str
-    original_name: str
-    chunk_count: int
-    folder_path: str
-    message: str
-
-
-class FolderInfo(BaseModel):
-    """Informations sur un dossier"""
-    folder_id: str
-    folder_name: str
-    folder_path: str
-    parent_path: str
-    created_at: str
-
-
-class CreateFolderRequest(BaseModel):
-    """Requête pour créer un dossier"""
-    folder_name: str
-    parent_path: str = "/"
-
-
-class FolderContentsResponse(BaseModel):
-    """Contenu d'un dossier"""
-    folder_path: str
-    files: List[FileInfo]
-    folders: List[FolderInfo]
-
-
-class MoveFileRequest(BaseModel):
-    """Requête pour déplacer un fichier"""
-    new_folder_path: str
-
-
-class DecryptResponse(BaseModel):
-    """Réponse après déchiffrement"""
-    file_id: str
-    original_name: str
-    output_path: str
-    message: str
 
 
 # Endpoints
@@ -341,9 +301,9 @@ async def delete_file(file_id: str, delete_chunks: bool = True):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
 
-@app.get("/")
-async def root():
-    """Point d'entrée de l'API"""
+@app.get("/api")
+async def api_info():
+    """Informations sur l'API"""
     return {
         "message": "MeshDrive Crypto API",
         "version": "1.0.0",
@@ -353,8 +313,7 @@ async def root():
             "list_files": "GET /files - Lister tous les fichiers",
             "get_file_info": "GET /files/{file_id} - Obtenir les infos d'un fichier",
             "delete_file": "DELETE /files/{file_id} - Supprimer un fichier"
-        },
-        "web_interface": "http://localhost:8000/web/"
+        }
     }
 
 
@@ -534,10 +493,37 @@ async def get_folder_contents(folder_path: str = "/"):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
 
 
+def _decrypt_file_for_zip(file_data: dict) -> dict:
+    """Fonction helper pour déchiffrer un fichier dans un thread pour le ZIP"""
+    try:
+        file_id = file_data['file_id']
+        zip_path_in_zip = file_data['zip_path']
+        original_name = file_data['original_name']
+        
+        # Déchiffrer le fichier temporairement
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            output_path = tmp_file.name
+        
+        crypto_system.decrypt_file(file_id, output_path)
+        
+        return {
+            'success': True,
+            'output_path': output_path,
+            'zip_path': zip_path_in_zip,
+            'original_name': original_name
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'original_name': file_data.get('original_name', 'unknown')
+        }
+
+
 @app.get("/download-folder/{folder_path:path}")
 async def download_folder_as_zip(folder_path: str):
     """
-    Télécharge un dossier complet en ZIP
+    Télécharge un dossier complet en ZIP avec multithreading pour le déchiffrement
     
     Args:
         folder_path: Chemin du dossier à télécharger (peut être "/" pour la racine)
@@ -546,7 +532,7 @@ async def download_folder_as_zip(folder_path: str):
         Fichier ZIP contenant le dossier
     """
     try:
-        logger.info(f"📦 Téléchargement du dossier en ZIP: {folder_path}")
+        logger.info(f"📦 Téléchargement du dossier en ZIP: {folder_path} (multithreading)")
         
         # Pour la racine, on télécharge directement sans vérifier l'existence
         if folder_path != "/":
@@ -563,40 +549,62 @@ async def download_folder_as_zip(folder_path: str):
             zip_path = tmp_zip.name
         
         try:
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # Fonction récursive pour ajouter les fichiers et dossiers
-                def add_folder_to_zip(folder_path_inner, zip_path_inner, base_path=""):
-                    contents = crypto_system.get_folder_contents(folder_path_inner)
-                    
-                    # Ajouter les fichiers
-                    for file_info in contents['files']:
-                        try:
-                            # Déchiffrer le fichier temporairement
-                            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                                output_path = tmp_file.name
-                            
-                            crypto_system.decrypt_file(file_info['file_id'], output_path)
-                            
-                            # Ajouter au ZIP avec le chemin relatif
-                            if base_path:
-                                zip_path_inner.write(output_path, f"{base_path}/{file_info['original_name']}")
-                            else:
-                                zip_path_inner.write(output_path, file_info['original_name'])
-                            
-                            # Supprimer le fichier temporaire
-                            if os.path.exists(output_path):
-                                os.unlink(output_path)
-                        except Exception as e:
-                            logger.warning(f"⚠️ Erreur lors du téléchargement du fichier {file_info['original_name']}: {str(e)}")
-                            continue
-                    
-                    # Ajouter les sous-dossiers récursivement
-                    for subfolder in contents['folders']:
-                        subfolder_base = f"{base_path}/{subfolder['folder_name']}" if base_path else subfolder['folder_name']
-                        add_folder_to_zip(subfolder['folder_path'], zip_path_inner, subfolder_base)
+            # Collecter tous les fichiers à déchiffrer
+            all_files = []
+            
+            def collect_files(folder_path_inner, base_path=""):
+                """Collecte récursivement tous les fichiers du dossier"""
+                contents = crypto_system.get_folder_contents(folder_path_inner)
                 
-                # Ajouter le contenu du dossier
-                add_folder_to_zip(folder_path, zipf, "")
+                # Ajouter les fichiers
+                for file_info in contents['files']:
+                    zip_path_in_zip = f"{base_path}/{file_info['original_name']}" if base_path else file_info['original_name']
+                    all_files.append({
+                        'file_id': file_info['file_id'],
+                        'original_name': file_info['original_name'],
+                        'zip_path': zip_path_in_zip
+                    })
+                
+                # Ajouter les sous-dossiers récursivement
+                for subfolder in contents['folders']:
+                    subfolder_base = f"{base_path}/{subfolder['folder_name']}" if base_path else subfolder['folder_name']
+                    collect_files(subfolder['folder_path'], subfolder_base)
+            
+            # Collecter tous les fichiers
+            collect_files(folder_path, "")
+            
+            logger.info(f"  📄 {len(all_files)} fichiers à déchiffrer en parallèle")
+            
+            # Déchiffrer les fichiers en parallèle
+            decrypted_files = []
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                futures = [executor.submit(_decrypt_file_for_zip, file_data) for file_data in all_files]
+                
+                for future in as_completed(futures):
+                    try:
+                        result = future.result()
+                        if result['success']:
+                            decrypted_files.append(result)
+                        else:
+                            logger.warning(f"⚠️ Erreur lors du déchiffrement de {result['original_name']}: {result['error']}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Erreur dans le thread: {str(e)}")
+            
+            # Ajouter les fichiers déchiffrés au ZIP
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for decrypted_file in decrypted_files:
+                    try:
+                        zipf.write(decrypted_file['output_path'], decrypted_file['zip_path'])
+                        # Supprimer le fichier temporaire
+                        if os.path.exists(decrypted_file['output_path']):
+                            os.unlink(decrypted_file['output_path'])
+                    except Exception as e:
+                        logger.warning(f"⚠️ Erreur lors de l'ajout au ZIP: {str(e)}")
+                        # Nettoyer le fichier temporaire en cas d'erreur
+                        if os.path.exists(decrypted_file['output_path']):
+                            os.unlink(decrypted_file['output_path'])
+            
+            logger.info(f"  ✅ ZIP créé avec {len(decrypted_files)} fichiers")
             
             # Retourner le fichier ZIP
             return FileResponse(
@@ -617,10 +625,47 @@ async def download_folder_as_zip(folder_path: str):
         raise HTTPException(status_code=500, detail=f"Erreur lors du téléchargement: {str(e)}")
 
 
+def _encrypt_single_file(file_data: dict) -> dict:
+    """Fonction helper pour chiffrer un fichier dans un thread"""
+    try:
+        file = file_data['file']
+        folder_path = file_data['folder_path']
+        tmp_path = file_data['tmp_path']
+        
+        # Chiffrer le fichier avec le nom original
+        result = crypto_system.encrypt_file(tmp_path, folder_path, file.filename)
+        
+        # Extraire les informations
+        if hasattr(result, 'file_id'):
+            file_id = result.file_id
+            original_name = result.original_name
+        else:
+            file_id = result.get('file_id', '')
+            original_name = result.get('original_name', file.filename)
+        
+        return {
+            'success': True,
+            'file_id': file_id,
+            'original_name': original_name,
+            'folder_path': folder_path,
+            'filename': file.filename
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'filename': file_data['file'].filename,
+            'error': str(e)
+        }
+    finally:
+        # Supprimer le fichier temporaire
+        if os.path.exists(file_data['tmp_path']):
+            os.unlink(file_data['tmp_path'])
+
+
 @app.post("/encrypt-folder")
 async def encrypt_folder(folder_path: str = "/", files: List[UploadFile] = File(...)):
     """
-    Chiffre plusieurs fichiers (upload de dossier)
+    Chiffre plusieurs fichiers (upload de dossier) avec multithreading
     
     Args:
         folder_path: Chemin du dossier de destination
@@ -630,11 +675,10 @@ async def encrypt_folder(folder_path: str = "/", files: List[UploadFile] = File(
         Liste des fichiers chiffrés
     """
     try:
-        logger.info(f"📁 Upload de {len(files)} fichiers dans {folder_path}")
+        logger.info(f"📁 Upload de {len(files)} fichiers dans {folder_path} (multithreading)")
         
-        results = []
-        errors = []
-        
+        # Préparer les fichiers pour le traitement parallèle
+        file_tasks = []
         for file in files:
             try:
                 # Sauvegarder temporairement le fichier
@@ -643,34 +687,42 @@ async def encrypt_folder(folder_path: str = "/", files: List[UploadFile] = File(
                     tmp_file.write(content)
                     tmp_path = tmp_file.name
                 
-                try:
-                    # Chiffrer le fichier avec le nom original
-                    result = crypto_system.encrypt_file(tmp_path, folder_path, file.filename)
-                    
-                    # Extraire les informations
-                    if hasattr(result, 'file_id'):
-                        file_id = result.file_id
-                        original_name = result.original_name
-                    else:
-                        file_id = result.get('file_id', '')
-                        original_name = result.get('original_name', file.filename)
-                    
-                    results.append({
-                        'file_id': file_id,
-                        'original_name': original_name,
-                        'folder_path': folder_path
-                    })
-                finally:
-                    # Supprimer le fichier temporaire
-                    if os.path.exists(tmp_path):
-                        os.unlink(tmp_path)
-                    
-            except Exception as e:
-                logger.error(f"❌ Erreur lors du chiffrement de {file.filename}: {str(e)}")
-                errors.append({
-                    'filename': file.filename,
-                    'error': str(e)
+                file_tasks.append({
+                    'file': file,
+                    'folder_path': folder_path,
+                    'tmp_path': tmp_path
                 })
+            except Exception as e:
+                logger.error(f"❌ Erreur lors de la préparation de {file.filename}: {str(e)}")
+        
+        # Traiter les fichiers en parallèle avec ThreadPoolExecutor
+        results = []
+        errors = []
+        
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(_encrypt_single_file, task) for task in file_tasks]
+            
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    if result['success']:
+                        results.append({
+                            'file_id': result['file_id'],
+                            'original_name': result['original_name'],
+                            'folder_path': result['folder_path']
+                        })
+                    else:
+                        errors.append({
+                            'filename': result['filename'],
+                            'error': result['error']
+                        })
+                        logger.error(f"❌ Erreur lors du chiffrement de {result['filename']}: {result['error']}")
+                except Exception as e:
+                    logger.error(f"❌ Erreur dans le thread: {str(e)}")
+                    errors.append({
+                        'filename': 'unknown',
+                        'error': str(e)
+                    })
         
         return {
             'success': len(results),

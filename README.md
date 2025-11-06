@@ -87,8 +87,8 @@ pip install fastapi uvicorn python-multipart cryptography
 ### Structure des dossiers
 
 Le projet créera automatiquement les dossiers suivants :
-- `keys/` : Métadonnées et clés de chiffrement (JSON)
-- `output/` : Fichiers chiffrés (chunks .enc)
+- `data/keys/` : Métadonnées et clés de chiffrement (JSON)
+- `data/chunks/` : Fichiers chiffrés (chunks .enc)
 
 ## 💻 Utilisation
 
@@ -104,7 +104,8 @@ L'API sera accessible sur `http://localhost:8000`
 ### 2. Accéder à l'interface web
 
 Ouvrez votre navigateur et accédez à :
-- **Interface web** : http://localhost:8000/web/
+- **Dashboard** : http://localhost:8000/ (page d'accueil avec lien vers le drive)
+- **Drive** : http://localhost:8000/drive (interface complète de gestion des fichiers)
 - **Documentation API** : http://localhost:8000/docs
 - **ReDoc** : http://localhost:8000/redoc
 
@@ -150,7 +151,8 @@ MeshDrive/
 │   └── folder_manager.py   # Gestion des dossiers
 │
 ├── web/                    # Interface web
-│   ├── index.html          # Page principale
+│   ├── dashboard.html      # Page d'accueil (Dashboard)
+│   ├── drive.html          # Interface principale (Drive)
 │   ├── styles.css          # Styles CSS
 │   ├── js/                 # Modules JavaScript
 │   │   ├── api.js          # Client API JavaScript
@@ -168,10 +170,10 @@ MeshDrive/
 │   ├── listener.py
 │   └── sender.py
 │
-├── keys/                   # Métadonnées (ignoré par git)
-│   └── _folders/           # Métadonnées des dossiers
-│
-├── output/                 # Fichiers chiffrés (ignoré par git)
+├── data/                   # Données (ignoré par git)
+│   ├── keys/               # Métadonnées et clés de chiffrement
+│   │   └── _folders/       # Métadonnées des dossiers
+│   └── chunks/             # Fichiers chiffrés (chunks .enc)
 │
 ├── .gitignore              # Fichiers ignorés par git
 └── README.md               # Ce fichier
@@ -201,9 +203,13 @@ MeshDrive/
 - `GET /download-folder/{folder_path}` : Télécharger un dossier en ZIP
 - `POST /encrypt-folder` : Uploader plusieurs fichiers
 
+#### Interface Web
+
+- `GET /` : Page d'accueil (Dashboard)
+- `GET /drive` : Interface complète de gestion des fichiers (Drive)
+
 #### Autres
 
-- `GET /` : Informations sur l'API
 - `GET /health` : État de l'API
 
 Pour la documentation complète, consultez :
@@ -242,16 +248,16 @@ curl -X POST "http://localhost:8000/folders" \
 
 ### Stockage
 
-- **Clés de chiffrement** : Stockées dans `keys/` (JSON)
-- **Fichiers chiffrés** : Stockés dans `output/` (chunks .enc)
-- **Métadonnées** : Stockées dans `keys/` (JSON)
+- **Clés de chiffrement** : Stockées dans `data/keys/` (JSON)
+- **Fichiers chiffrés** : Stockés dans `data/chunks/` (chunks .enc)
+- **Métadonnées** : Stockées dans `data/keys/` (JSON)
 
-⚠️ **Important** : Les fichiers `keys/` et `output/` ne doivent **jamais** être committés sur Git. Ils sont automatiquement ignorés par `.gitignore`.
+⚠️ **Important** : Le dossier `data/` ne doit **jamais** être committé sur Git. Il est automatiquement ignoré par `.gitignore`.
 
 ### Bonnes pratiques
 
 1. Ne partagez jamais vos clés de chiffrement
-2. Sauvegardez régulièrement le dossier `keys/`
+2. Sauvegardez régulièrement le dossier `data/keys/`
 3. Utilisez HTTPS en production
 4. Configurez CORS correctement pour la production
 
@@ -261,7 +267,7 @@ curl -X POST "http://localhost:8000/folders" \
 
 Éditez `cryptolib/config.py` pour modifier :
 - Taille des chunks (`CHUNK_SIZE`)
-- Répertoires de stockage (`KEYS_DIR`, `CHUNKS_DIR`)
+- Répertoires de stockage (`DATA_DIR`, `KEYS_DIR`, `CHUNKS_DIR`)
 - Niveau de logging (`LOG_LEVEL`)
 
 ### Ajouter de nouvelles fonctionnalités
