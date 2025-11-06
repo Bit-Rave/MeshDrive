@@ -9,13 +9,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import uvicorn
-
-if __name__ == "__main__":
+def main():
     uvicorn.run(
-        "api.crypto_api:app",
+        "API.crypto_api:app",
         host="127.0.0.1",
-        port=8000,
-        reload=True,
+        port=4040,
+        reload=False,
         log_level="info"
     )
-

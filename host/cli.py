@@ -630,6 +630,5 @@ def init():
     print("   meshdrive-host start")
 
 
-if __name__ == "__main__":
-    app()
+
 
