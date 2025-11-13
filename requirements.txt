@@ -4,7 +4,7 @@ uvicorn[standard]==0.38.0
 python-multipart==0.0.20
 
 # Cryptographie
-cryptography==46.3.0
+cryptography==46.0.3
 
 # Authentification et sécurité
 python-jose[cryptography]==3.3.0

@@ -10,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.database import init_db
 from core.auth_routes import router as auth_router
-from api.routes import files_router, folders_router, static_router
-from api.routes.multipart_files import router as multipart_files_router
+from API.routes import files_router, folders_router, static_router
+from API.routes.multipart_files import router as multipart_files_router
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)

@@ -1,9 +1,4 @@
-import app
+import API.run_api as run_api
 
-
-
-def main():
-    app.main()
-    
 if __name__ == "__main__":
-    main()
+    run_api.main()
